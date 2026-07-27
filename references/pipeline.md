@@ -38,6 +38,13 @@ not parse if copied verbatim.
 
 ## Extraction routing by file type
 
+**First, the corpus has to exist on disk.** If it was handed to you as a git URL, a file URL, or a
+docs site or wiki, run the acquisition procedure in [`acquisition.md`](acquisition.md) before any of
+this: fetch it, split the person's material from the container's own scaffolding and get the user to
+confirm that split, and label every unit `firsthand` / `secondhand` / `mixed` / `unknown`. The
+labels are load-bearing downstream — expression metrics run on firsthand text only — so they must be
+attached before extraction, not reconstructed after.
+
 Preserve structure — headings, speaker turns, timestamps — because segmentation and the
 interactional pass depend on it.
 
@@ -81,12 +88,17 @@ Write a `clusters/manifest.json`:
 {
   "clusters": [
     {"id": "c01", "label": "Book: <title> ch.3", "source": "raw/book.txt",
-     "kind": "monologue", "period": "2018", "tokens": 4200}
+     "kind": "monologue", "period": "2018", "tokens": 4200,
+     "attribution": "firsthand"}
   ]
 }
 ```
 
 `kind` is one of `monologue | dialogue | decision_record`. It drives auto-weighting in Stage 3.
+
+`attribution` is required and one of `firsthand | secondhand | mixed | unknown` — see
+[`acquisition.md`](acquisition.md) for how to assign it and the three hard rules that depend on it.
+Remote clusters also carry `source_url`, `retrieved`, and (for git) `revision`.
 
 ## Coverage map
 

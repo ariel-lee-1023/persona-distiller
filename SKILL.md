@@ -64,10 +64,13 @@ never inside the embodiment artifact. You keep full auditability; the persona ke
 
 ## Inputs
 
-**Required:** one or more files, or a directory, of the person's public record — PDF, EPUB, DOCX,
-TXT, Markdown, HTML, or transcripts. Mixed formats are fine. Where those files live depends on the
-host (see **Host environment** below); if the location is not given, ask for it rather than
-guessing.
+**Required:** the person's public record, as any of four source types — **local files or a
+directory**; a **git repository URL**; a **plain file URL**; or a **docs site, wiki, or published
+note collection**. Formats: PDF, EPUB, DOCX, TXT, Markdown, HTML, or transcripts; mixed is fine.
+Where the corpus lives depends on the host (see **Host environment** below); if the location is not
+given, ask for it rather than guessing. Anything remote is fetched and classified before Stage 1 —
+procedure in `references/acquisition.md`, and skipping it is how you end up distilling a
+repository's scaffolding, or someone's notes *about* the person, instead of the person.
 
 **Optional:** a focus statement, e.g. "decision style in public controversies" or "overall
 voice for analysis tasks". If omitted, default to overall identification.
@@ -86,7 +89,7 @@ resolved paths throughout.
 
 | What | How to resolve |
 |---|---|
-| **Corpus in** | Whatever the user points you at. Some hosts stage uploads in a fixed directory (on claude.ai, `/mnt/user-data/uploads/`); others expect a path or a working-tree location. If unstated, ask. |
+| **Corpus in** | Whatever the user points you at — and it may be **remote**, not a local path. Some hosts stage uploads in a fixed directory (on claude.ai, `/mnt/user-data/uploads/`); others expect a path or a working-tree location. If unstated, ask. Network access and `git` are host capabilities: **check them, never assume them**, and if either is missing say so and ask for the material locally (`references/acquisition.md`). |
 | **Work dir** | Create one. Default to `persona_work/` under the current working directory. Prefer a host-provided scratch or temp location when one exists. Create it before Stage 1 — nothing later works without it. |
 | **Persona out** | Wherever the host delivers artifacts to the user (on claude.ai, `/mnt/user-data/outputs/`); otherwise the current working directory, unless the user says otherwise. |
 
@@ -106,6 +109,10 @@ Two further portability rules:
 
 Each stage has a detailed reference file. Read the reference before executing that stage the
 first time; the summaries below are orientation, not the full procedure.
+
+**Acquisition precedes Stage 1.** If the corpus is remote, fetch it, separate the person's material
+from the container's scaffolding with the user's confirmation, and label every unit `firsthand` /
+`secondhand` / `mixed` / `unknown` before ingesting anything → `references/acquisition.md`.
 
 ### Stage 1 — Ingest & segment
 Read the corpus. Extract text with structure preserved (headings, speaker turns, timestamps).
@@ -242,6 +249,9 @@ curation, never forward to the template. The remaining stages can reuse familiar
 patterns (lean front-loaded core, on-demand reference files, tight token budgets).
 
 ## Reference files
+- `references/acquisition.md` — before Stage 1: resolving remote source types, fetching, separating
+  corpus from container, the attribution classification and its three hard rules, source
+  independence, wiki chunking, and honest degradation when the host has no network.
 - `references/pipeline.md` — Stage 1 & full-pipeline mechanics, extraction routing by file type,
   the coverage map schema.
 - `references/extraction.md` — Stage 2: the expression-DNA taxonomy, projectible-regularity

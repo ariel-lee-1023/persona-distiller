@@ -16,7 +16,7 @@
   "$defs": {
     "cluster": {
       "type": "object",
-      "required": ["id", "label", "source", "kind", "tokens"],
+      "required": ["id", "label", "source", "kind", "tokens", "attribution"],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -47,6 +47,26 @@
           "type": "integer",
           "minimum": 1,
           "description": "Approximate token count. A two-sentence cluster corroborates nothing — keep each large enough to be meaningful."
+        },
+        "attribution": {
+          "type": "string",
+          "enum": ["firsthand", "secondhand", "mixed", "unknown"],
+          "description": "Whose words these are. firsthand = the person's own (book, essay, transcript turns, posts, their commit messages); secondhand = someone writing about them (summaries, study notes, paraphrase, analysis); mixed = quotation embedded in another author's commentary; unknown = authorship undeterminable. Required, because three hard rules depend on it: expression and modulation extraction runs on firsthand clusters only, a projectible regularity needs at least one firsthand cluster, and cost-refusals or interactional moves sourced only from secondhand material are flagged unverified and cannot satisfy the Stage 5 presence assertion. See acquisition.md."
+        },
+        "source_url": {
+          "type": "string",
+          "description": "Where this cluster came from, when the source is remote — repository, page, or file URL. Keep it even after grouping short wiki pages into one cluster, so provenance survives the merge. Omit for local corpora."
+        },
+        "retrieved": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+          "description": "ISO 8601 date of retrieval. Remote content changes under you; without this a re-run is not the same run."
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit SHA for git sources. The reproducibility anchor a URL alone cannot give you."
         }
       }
     }
@@ -60,7 +80,20 @@
           "source": "raw/book.txt",
           "kind": "monologue",
           "period": "2018",
-          "tokens": 4200
+          "tokens": 4200,
+          "attribution": "firsthand"
+        },
+        {
+          "id": "c02",
+          "label": "Knowledge base: reading notes on <title>",
+          "source": "src/kb/notes/title/",
+          "kind": "monologue",
+          "period": "2023",
+          "tokens": 3100,
+          "attribution": "secondhand",
+          "source_url": "https://example.org/kb/notes/title/",
+          "retrieved": "2026-07-27",
+          "revision": "9f2c1ab7d4e5f60123456789abcdef0123456789"
         }
       ]
     }

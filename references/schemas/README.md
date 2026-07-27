@@ -21,8 +21,8 @@ schema is authoritative.
 
 | Artifact | Stage | Schema | Prose |
 |---|---|---|---|
-| `clusters/manifest.json` | 1 — segment | [`clusters-manifest.schema.json`](clusters-manifest.schema.json) | [pipeline.md](../pipeline.md) |
-| `coverage_map.json` | 1 — coverage map | [`coverage-map.schema.json`](coverage-map.schema.json) | [pipeline.md](../pipeline.md) |
+| `clusters/manifest.json` | 1 — segment | [`clusters-manifest.schema.json`](clusters-manifest.schema.json) | [pipeline.md](../pipeline.md), [acquisition.md](../acquisition.md) |
+| `coverage_map.json` | 1 — coverage map | [`coverage-map.schema.json`](coverage-map.schema.json) | [pipeline.md](../pipeline.md), [acquisition.md](../acquisition.md) |
 | `extractions.json` | 2 — extraction | [`extractions.schema.json`](extractions.schema.json) | [extraction.md](../extraction.md) |
 | `scores.json` | 3 — curation audit log | [`scores.schema.json`](scores.schema.json) | [scoring.md](../scoring.md) |
 | `fidelity.json` | gate + 5 — verification | [`fidelity.schema.json`](fidelity.schema.json) | [fidelity-tests.md](../fidelity-tests.md) |
@@ -32,10 +32,22 @@ schema is authoritative.
 `scripts/holdout_split.py` reads it. The script's own output (`split.json`) has no schema here; the
 script is its source of truth.
 
+The two Stage 1 schemas also carry the results of **corpus acquisition**, which runs before Stage 1
+when the source is remote: `attribution` plus the optional `source_url` / `retrieved` / `revision`
+on each cluster, and the `sources[]` records plus `firsthand_ratio` on the coverage map. See
+[acquisition.md](../acquisition.md).
+
 ## Constraints the schemas encode
 
 Beyond field types, a few of the skill's hard rules are expressed structurally:
 
+- A cluster requires an **`attribution`** label — `firsthand | secondhand | mixed | unknown`. It is
+  required rather than optional because three hard rules read it (expression and modulation
+  extraction runs on firsthand clusters only; a projectible regularity needs at least one firsthand
+  cluster; cost-refusals and interactional moves attested only secondhand are flagged unverified and
+  cannot satisfy the Stage 5 presence assertion), and an absent label defaults in practice to the
+  optimistic reading. Making it required means a manifest cannot stay silent about whose words these
+  are.
 - A `regularity` element requires **≥2 clusters** — the corroboration rule from Stage 2.
 - A `cost_refusal` or `interactional` element requires `convenient_move`, since the divergence
   between the convenient response and the attested one *is* the signal.
@@ -49,6 +61,9 @@ Two rules are deliberately **not** encoded, because valid records violate them:
   are still cut when they read generic or conflict with a higher-scoring voice feature.
 - **Weights summing to 1.0** — auto-weighting renormalises, but JSON Schema cannot express the sum.
   Check it yourself when you adjust weights.
+- **The firsthand requirement on regularities** — the label lives in the manifest and the rule binds
+  in `extractions.json`, and no schema can follow a cluster id across files. The enum makes the fact
+  recordable; enforcing it is on you.
 
 ## Validating
 

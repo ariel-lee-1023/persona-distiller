@@ -91,6 +91,38 @@ Narrow the distillation by naming a facet — *"decision style in public controv
 
 PDF, EPUB, DOCX, TXT, Markdown, HTML, and transcripts. Mixed formats are fine.
 
+### Accepted corpus sources
+
+The corpus does not have to be local files. Four source types:
+
+| Source | Example | What happens |
+|---|---|---|
+| **Local path or directory** | uploaded files, a folder | Read directly |
+| **Git repository URL** | a repo of essays or published notes | Shallow clone; the commit SHA is recorded |
+| **Plain file URL** | a hosted PDF or essay page | Downloaded into the work directory |
+| **Docs site, wiki, note collection** | MkDocs, Obsidian Publish, a wiki | Crawled **within the given path prefix only** — never the whole domain |
+
+Anything remote goes through [`references/acquisition.md`](references/acquisition.md) before Stage 1,
+which does two things the rest of the pipeline depends on.
+
+It **separates corpus from container**. A repository or a site is a container: some of it is the
+person's writing, the rest is the machinery that publishes it — READMEs, build config, templates,
+navigation and index pages, other people's contributions. That classification is shown to you for
+confirmation before extraction starts. Skip it and the worst case is silent: a fluent persona of the
+repository's own scaffolding.
+
+It **classifies attribution** — every cluster is labelled `firsthand`, `secondhand`, `mixed`, or
+`unknown`. This matters because most online knowledge bases are secondhand, and a well-organised set
+of someone's *notes on* a thinker is more attractive to distil than the thinker's actual books:
+cleaner, better segmented, already thematic, and the wrong person. Three hard rules follow — style
+metrics are never computed on secondhand text, a projectible regularity needs at least one firsthand
+cluster, and a cost-bearing refusal attested only secondhand is flagged unverified and cannot satisfy
+the Stage 5 presence assertion.
+
+Network access and `git` are treated as host capabilities to check, not assume. Without them the
+skill says so and asks you to supply the material locally — it never substitutes recollection of the
+person for retrieved text.
+
 ---
 
 ## The pipeline
@@ -140,6 +172,7 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 .
 ├── SKILL.md                        # the skill itself — pipeline, rules, judgment calls
 ├── references/
+│   ├── acquisition.md              # before Stage 1: fetching remote corpora, attribution rules
 │   ├── pipeline.md                 # Stage 1 mechanics, extraction routing, coverage map schema
 │   ├── extraction.md               # Stage 2 taxonomy and cost-bearing catalogue
 │   ├── scoring.md                  # Stage 3 probes, worked examples, audit-log format

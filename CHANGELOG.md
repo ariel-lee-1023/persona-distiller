@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-07-27
+
+Remote corpus acquisition. The corpus path stopped being hardcoded in 1.1.0, but the corpus was
+still assumed to be local files already on disk. It can now be a git repository, a file URL, or a
+docs site, wiki, or published note collection — with a procedure that separates the person's
+material from the container's scaffolding, and classifies whose words each cluster actually
+contains.
+
+### Added
+
+- **`references/acquisition.md`** — the corpus-acquisition procedure, run *before* Stage 1 (not a
+  sixth stage; the five-stage framing is unchanged). Covers resolving the source type, fetching by
+  type, corpus-versus-container separation, attribution classification, source independence, chunking
+  for wikis and note collections, honest degradation, and crawl rights.
+- **Corpus/container separation with mandatory user confirmation** — a repository or a site is a
+  *container*. Everything acquired is inventoried and classified as corpus or scaffolding (READMEs
+  describing the collection, build and CI config, templates, navigation and index pages, licence
+  files, contributions by anyone other than the subject), and the classification is shown to the user
+  for confirmation before Stage 1. Handed a URL, the old behaviour varied by host, and its worst case
+  was silent: a fluent persona of the repository's own scaffolding.
+- **Attribution classification** — every acquired unit, and every cluster it produces, is labelled
+  `firsthand`, `secondhand`, `mixed`, or `unknown`. Most online knowledge bases are secondhand;
+  distilling a well-organised set of someone's *notes on* a thinker yields a persona of the
+  note-taker's summarising prose.
+- **Three hard rules following from attribution** — expression and modulation extraction runs on
+  `firsthand` clusters only, and `style_metrics.py` is never run on secondhand text because it
+  measures the wrong person's prose; a projectible regularity requires at least one `firsthand`
+  cluster, with secondhand clusters able to corroborate but not to carry one alone; and cost-bearing
+  refusals or interactional moves sourced only from secondhand material are flagged unverified and
+  cannot satisfy the Stage 5 cost/presence assertion.
+- **Source-independence collapsing** — the ≥2-cluster corroboration rule assumes clusters are
+  independent evidence. Two pages of one knowledge base derived from the same underlying work are
+  *one* source and are now collapsed before scoring, so a single source cannot silently satisfy a
+  rule designed to require two.
+- **Chunking guidance for wikis and note collections** — group short pages by topic or by the
+  underlying source work until each cluster can carry evidence, and deduplicate first, since
+  repetition inside one knowledge base is not recurrence across clusters and otherwise reads as a
+  preoccupation that does not exist.
+- **Cluster attribution fields** — `clusters-manifest.schema.json` gains a required `attribution`
+  enum plus optional `source_url`, `retrieved` (ISO 8601 date), and `revision` (commit SHA), because
+  remote content changes and reproducibility needs the retrieval pinned.
+- **Acquisition records on the coverage map** — `coverage-map.schema.json` gains optional `sources`
+  (type, location, retrieval date, revision, licence) and `firsthand_ratio`, the number that says how
+  much of a persona came from the person rather than from people writing about them.
+
+### Changed
+
+- **`SKILL.md` — Inputs** now names four accepted source types (local path or directory, git
+  repository URL, plain file URL, docs site / wiki / note collection) instead of "one or more files,
+  or a directory".
+- **`SKILL.md` — Host environment** — the *Corpus in* row states that the source may be remote, and
+  that network access and `git` are host capabilities to check rather than assume; missing either
+  means saying so and asking for the material locally, never reconstructing it from training-data
+  recollection of the person.
+- **`SKILL.md` — pipeline preamble** establishes that acquisition precedes Stage 1, and the reference
+  list points at `references/acquisition.md`.
+- **`references/pipeline.md`** — the extraction-routing section now opens by requiring acquisition
+  and the confirmed corpus/scaffolding split first, and the `clusters/manifest.json` snippet carries
+  `attribution`.
+- **`references/schemas/README.md`** — the index rows for the two Stage 1 artifacts point at
+  `acquisition.md`, the required `attribution` label joins the list of structurally encoded rules,
+  and the firsthand requirement on regularities is recorded among the rules deliberately left
+  unencoded, since no schema can follow a cluster id across files.
+
 ## [1.1.0] — 2026-07-27
 
 Host portability + artifact schemas. The skill previously assumed the filesystem layout of one
@@ -105,6 +169,7 @@ Initial public release.
 - **Scope statement** — perspective and thinking-style work only; explicit refusal of deceptive
   impersonation and forged attribution.
 
-[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ariel-lee-1023/persona-distiller/releases/tag/v1.0.0
