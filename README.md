@@ -144,14 +144,34 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 │   ├── extraction.md               # Stage 2 taxonomy and cost-bearing catalogue
 │   ├── scoring.md                  # Stage 3 probes, worked examples, audit-log format
 │   ├── output-template.md          # Stage 4 core template + package layout
-│   └── fidelity-tests.md           # Stage 5 procedures, thresholds, reporting
+│   ├── fidelity-tests.md           # Stage 5 procedures, thresholds, reporting
+│   └── schemas/                    # JSON Schema for every intermediate artifact
+│       ├── clusters-manifest.schema.json
+│       ├── coverage-map.schema.json
+│       ├── extractions.schema.json
+│       ├── scores.schema.json
+│       ├── fidelity.schema.json
+│       └── passages.schema.json
 ├── scripts/
 │   ├── style_metrics.py            # countable expression features (stdlib only)
 │   └── holdout_split.py            # reproducible seeded keep/masked split
+├── .gitignore
 ├── CHANGELOG.md
 ├── LICENSE
+├── NOTICE.md
 └── README.md
 ```
+
+### Host requirements
+
+The skill is written to run under **any** agent host, not a particular one. It needs a filesystem it
+can write to and Python 3 for the two scripts; both are standard-library-only, with no install step.
+
+Three locations are host-dependent and resolved once at the start of a run: where the corpus is read
+from, where the work directory is created (default `persona_work/`), and where the finished persona
+is delivered. Anything else the pipeline suggests — a PDF reader, a DOCX converter, a companion
+document skill — is a preference with a named stdlib fallback, so a missing tool degrades quality
+rather than failing the run.
 
 ### Scripts
 
@@ -161,11 +181,21 @@ Both run standalone, no install required.
 # Measure expression features across a corpus (or a single file)
 python scripts/style_metrics.py path/to/corpus/
 
-# Produce a reproducible seeded split for the held-out projection test
-python scripts/holdout_split.py path/to/corpus/ --seed 42
+# Produce a reproducible seeded split for the held-out projection test.
+# Takes a JSON list of passage IDs — {"passages": ["p001", ...]} or a bare array — not a corpus path.
+python scripts/holdout_split.py passages.json --seed 42 --frac 0.12 --out split.json
+
+# …or pass the IDs inline
+python scripts/holdout_split.py --ids p001 p002 p003 p004 --seed 42
 ```
 
 `style_metrics.py` reports sentence-length distribution, hedge and booster rates, punctuation rhythm, lexical diversity, person-reference ratios, and top content terms and bigrams.
+
+### Artifact schemas
+
+The pipeline writes five intermediate JSON artifacts to its work directory (default `persona_work/`) — `clusters/manifest.json`, `coverage_map.json`, `extractions.json`, `scores.json`, `fidelity.json` — plus the `passages.json` that `holdout_split.py` reads. These are **runtime outputs for a specific corpus, not files this repository ships**. There is no universal `extractions.json`; it is the extraction of one particular person's material. They are kept for the whole run rather than cleaned up between stages, because the gates can send curation backwards and because the audit log and coverage report are built from them. `.gitignore` keeps them out of version control.
+
+What the repository does ship is their shape: [`references/schemas/`](references/schemas/) holds a JSON Schema (draft 2020-12) for each, with worked examples. The snippets embedded in the prose references are illustrative and some carry `//` comments, so they will not parse if copied verbatim — the schemas are the authoritative, validatable version. A few of the skill's hard rules are encoded structurally there too (the ≥2-cluster corroboration rule, the required `convenient_move` on cost-refusal elements, 0–1 score bounds). See [`references/schemas/README.md`](references/schemas/README.md) for the index and what is deliberately left unencoded.
 
 ---
 

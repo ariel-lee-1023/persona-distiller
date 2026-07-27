@@ -5,33 +5,55 @@ formats, how to cut the corpus into clusters, and the internal artifacts the lat
 
 ## Working directories
 
-Keep intermediate artifacts so curation decisions stay inspectable:
+**Create the work directory before anything else.** Default to `persona_work/` under the current
+working directory; use a host-provided scratch or temp location instead when one exists. Every
+later stage reads and writes here, so resolve the path once and reuse it.
 
 ```
-/home/claude/persona_work/
-├── raw/                 # extracted plain text, one file per source
-├── clusters/            # segmented clusters, one file per cluster, with a manifest
-├── coverage_map.json    # domains, dialogue ratio, decision density, temporal spread
-├── extractions.json     # Stage 2 output: every candidate element with evidence
-├── scores.json          # Stage 3 output: composite scores + keep/cut + reason
-└── fidelity.json        # Stage 5 results
+<work-dir>/                # default: ./persona_work/
+├── raw/                   # extracted plain text, one file per source
+├── clusters/              # segmented clusters, one file per cluster, with a manifest
+├── coverage_map.json      # domains, dialogue ratio, decision density, temporal spread
+├── extractions.json       # Stage 2 output: every candidate element with evidence
+├── scores.json            # Stage 3 output: composite scores + keep/cut + reason
+└── fidelity.json          # gate results + Stage 5 results
 ```
 
-Only the final persona directory goes to `/mnt/user-data/outputs/`. The work dir is your scratchpad.
+Keep these artifacts for the whole run — do not clean up between stages. Three things depend on it:
+the control flow is a **loop** (a failed gate sends you back to re-curate, which needs
+`extractions.json` and the previous `scores.json`); the hard deletion rule is only defensible
+because `scores.json` logs every keep/cut with its reason; and the honesty split relocates all
+caveats into the coverage report and `provenance.md`, which are built from `coverage_map.json` and
+`fidelity.json`.
+
+Only the finished persona directory is delivered to the user, at the persona-out location resolved
+at the start of the run. The work dir is your scratchpad and stays behind.
+
+**If the work dir sits inside a git repository, confirm it is ignored before writing.** `raw/` holds
+the extracted full text of the source corpus; committing it would republish the sources.
+
+Shapes for every JSON artifact above: [`schemas/`](schemas/) — authoritative and validatable. The
+snippets in this file are illustrative and some carry `//` comments for readability, so they will
+not parse if copied verbatim.
 
 ## Extraction routing by file type
 
 Preserve structure — headings, speaker turns, timestamps — because segmentation and the
-interactional pass depend on it. If a document-reading skill is available for a format, prefer it;
-otherwise use the tools below. All of these are stdlib- or common-library level.
+interactional pass depend on it.
 
-| Format | How to extract | Keep |
-|---|---|---|
-| TXT / MD / HTML | read directly; for HTML strip tags but keep heading levels and blockquotes | headings, lists, quotes |
-| PDF | `pdftotext -layout` (or the `pdf`/`pdf-reading` skill for scanned/complex) | page breaks, headings |
-| EPUB | unzip and read spine XHTML in order (or `ebooklib`) | chapter boundaries |
-| DOCX | `python-docx`, or the `docx` skill | headings, styles |
-| Transcripts | keep speaker labels and turn boundaries verbatim | who-said-what, turn order |
+Each row below gives a **preferred** route and a **fallback**. If your host offers a
+document-reading tool or companion skill for a format, prefer it; otherwise take the fallback,
+which needs only common libraries or a standard CLI. Never fail a run because a preferred tool is
+absent — fall back and note any resulting quality loss in the coverage report.
+
+| Format | Preferred | Fallback | Keep |
+|---|---|---|---|
+| TXT / MD | read directly | — | headings, lists, quotes |
+| HTML | host HTML reader | strip tags, keep heading levels and blockquotes | headings, lists, quotes |
+| PDF | host PDF-reading tool (essential for scanned or complex layouts) | `pdftotext -layout`, else `pypdf` | page breaks, headings |
+| EPUB | `ebooklib` | unzip and read spine XHTML in document order | chapter boundaries |
+| DOCX | host DOCX tool | `python-docx` | headings, styles |
+| Transcripts | read directly | — | who-said-what, turn order |
 
 Sanity-check every extraction: if a file yields near-empty or garbled text (common with scanned
 PDFs), flag it and either OCR it or note it as unusable in the coverage report — do not silently

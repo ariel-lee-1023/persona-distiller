@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ariel-lee-1023/persona-distiller/main/references/schemas/extractions.schema.json",
+  "title": "extractions.json",
+  "description": "Stage 2 output. A flat list of every candidate element found across the three extraction passes, each carrying the evidence Stage 3 scores and Stage 5 tests against. Capture evidence faithfully here — it is not recoverable later.",
+  "type": "array",
+  "items": { "$ref": "#/$defs/element" },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "required": ["id", "type", "statement", "clusters", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^e[0-9]{3,}$",
+          "description": "Stable element id, e.g. 'e017'. Referenced by scores.json."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["expression", "modulation", "regularity", "cost_refusal", "interactional", "preoccupation"],
+          "description": "Element class. Drives class priority in the Stage 3 elevation rule: cost_refusal ≈ regularity > interactional > modulation > preoccupation > expression."
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The claim about the person, written as a pattern rather than an instance — e.g. 'when asked for a concrete prediction, shifts to the principle at stake rather than naming a number'."
+        },
+        "convenient_move": {
+          "type": "string",
+          "description": "The generic or self-serving response the person did NOT make. Required for cost_refusal and interactional elements — the divergence between this and `statement` is the signal. Omit for other types."
+        },
+        "clusters": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^c[0-9]{2,}$" },
+          "description": "Cluster ids from clusters/manifest.json where this element is attested. A regularity qualifies only with ≥2 independent clusters."
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "1–3 short example passages. Evidence for scoring only — not text to paste into the core, which is written in the persona's voice from these regularities rather than stitched from quotations."
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Measured features from style_metrics.py. Populated for expression and modulation elements; empty object otherwise. Shape follows the script's output.",
+          "additionalProperties": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "enum": ["cost_refusal", "interactional"] } },
+            "required": ["type"]
+          },
+          "then": { "required": ["convenient_move"] }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "regularity" } },
+            "required": ["type"]
+          },
+          "then": { "properties": { "clusters": { "minItems": 2 } } }
+        }
+      ]
+    }
+  },
+  "examples": [
+    [
+      {
+        "id": "e017",
+        "type": "cost_refusal",
+        "statement": "Holds that <line> even when <audience> expects the opposite.",
+        "convenient_move": "…",
+        "clusters": ["c03", "c09", "c11"],
+        "evidence": ["short passage 1", "short passage 2"],
+        "metrics": {}
+      }
+    ]
+  ]
+}

@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-27
+
+Host portability + artifact schemas. The skill previously assumed the filesystem layout of one
+specific agent host; it now runs anywhere. Intermediate artifacts gain canonical JSON Schemas.
+
+### Added
+
+- **`SKILL.md` — "Host environment" section** — the three host-dependent locations (corpus in, work
+  directory, persona out) are now named explicitly and resolved once at the start of a run, instead
+  of being hardcoded. States that suggested tools are preferences with fallbacks, and that both
+  scripts are standard-library-only under any Python 3.
+- **Explicit work-directory creation** — `references/pipeline.md` now instructs the agent to create
+  the work directory before Stage 1 and explains why the artifacts must survive the whole run: the
+  control flow is a loop, the deletion rule is only defensible with the audit log intact, and the
+  coverage report and `provenance.md` are built from those files.
+- **`.gitignore`** — blocks the work directory, generated `*-perspective/` personas, stray
+  intermediate artifacts, and source-corpus formats (`*.pdf`, `*.epub`, `*.mobi`, `*.azw`,
+  `*.docx`, and corpus directories). This last group protects the claim in `NOTICE.md`: a single
+  careless `git add -A` on a corpus directory would republish the source works. Shipped schemas are
+  explicitly re-included so no JSON rule can shadow them.
+- **`references/schemas/`** — JSON Schema (draft 2020-12) for every intermediate artifact the
+  pipeline writes, each with a worked example: `clusters-manifest.schema.json`,
+  `coverage-map.schema.json`, `extractions.schema.json`, `scores.schema.json`,
+  `fidelity.schema.json`, and `passages.schema.json` (the input `holdout_split.py` reads).
+  Previously these shapes existed only as illustrative snippets across four reference files,
+  two of which carry `//` comments and so do not parse as JSON if copied verbatim.
+- **Structurally encoded rules** — the schemas express several of the skill's hard constraints
+  rather than only field types: a `regularity` element requires ≥2 corroborating clusters, a
+  `cost_refusal` or `interactional` element requires `convenient_move`, a `core` decision requires
+  a `rank`, and all probe scores and composites are bounded to 0–1.
+- **`references/schemas/README.md`** — artifact-to-stage-to-schema index, and an explicit note on
+  the two rules deliberately left unencoded (the 0.55 deletion threshold, which valid `cut` records
+  fall below, and weights summing to 1.0, which JSON Schema cannot express).
+
+### Changed
+
+- **Work directory is now relative** — `persona_work/` under the current working directory, or a
+  host-provided scratch location, replacing the hardcoded `/home/claude/persona_work/`.
+- **Corpus input and persona output locations are resolved from the host** rather than fixed to
+  `/mnt/user-data/uploads/` and `/mnt/user-data/outputs/`. Those paths remain documented as one
+  host's convention, not as the contract.
+- **Extraction routing table restructured into preferred / fallback columns** — every format has a
+  named stdlib or common-CLI fallback, so a host lacking a document-reading tool degrades output
+  quality and logs it in the coverage report rather than failing the run.
+
+### Fixed
+
+- **`README.md` script usage** — the `holdout_split.py` example passed a corpus directory, which
+  the script cannot read; it requires a JSON list of passage IDs or inline `--ids`. Corrected, and
+  the `--ids` form added.
+- **`SKILL.md` script description** — now states that `holdout_split.py` takes a JSON passage-ID
+  list rather than a corpus path.
+
 ## [1.0.0] — 2026-07-23
 
 Initial public release.
@@ -52,5 +105,6 @@ Initial public release.
 - **Scope statement** — perspective and thinking-style work only; explicit refusal of deceptive
   impersonation and forged attribution.
 
-[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ariel-lee-1023/persona-distiller/releases/tag/v1.0.0

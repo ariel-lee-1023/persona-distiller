@@ -1,0 +1,74 @@
+# ---------------------------------------------------------------------------
+# Run artifacts
+# ---------------------------------------------------------------------------
+# The pipeline's work directory. Default name is persona_work/, but a host may
+# resolve it elsewhere — if you use a different name, add it here before the
+# first run. raw/ inside it holds the extracted full text of the source corpus.
+persona_work/
+work/
+.persona_work/
+
+# Generated personas. These are deliverables for the user, not repo content.
+*-perspective/
+
+# Intermediate artifacts, in case a run writes them to the repo root rather
+# than into the work directory.
+coverage_map.json
+extractions.json
+scores.json
+fidelity.json
+manifest.json
+passages.json
+split.json
+
+# ---------------------------------------------------------------------------
+# Source corpora — never commit
+# ---------------------------------------------------------------------------
+# NOTICE.md states that this repository reproduces no substantial portion of
+# any copyrighted source work. One careless `git add -A` would falsify that.
+# Source material stays on the machine that runs the distillation.
+*.pdf
+*.epub
+*.mobi
+*.azw
+*.azw3
+*.docx
+*.doc
+*.rtf
+*.odt
+corpus/
+corpora/
+sources/
+raw/
+transcripts/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# OS and editor
+# ---------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---------------------------------------------------------------------------
+# Keep the shipped schemas visible regardless of the JSON rules above
+# ---------------------------------------------------------------------------
+!references/schemas/
+!references/schemas/*.json

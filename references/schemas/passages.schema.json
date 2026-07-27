@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ariel-lee-1023/persona-distiller/main/references/schemas/passages.schema.json",
+  "title": "passages.json",
+  "description": "Input file for scripts/holdout_split.py. A list of qualifying passage IDs to split into kept and masked sets for the held-out projection test. The script accepts either the wrapped object form or a bare array. At least 4 IDs are required — below that no meaningful set can be held out.",
+  "oneOf": [
+    {
+      "title": "Wrapped form",
+      "type": "object",
+      "required": ["passages"],
+      "additionalProperties": false,
+      "properties": {
+        "passages": { "$ref": "#/$defs/idList" }
+      }
+    },
+    {
+      "title": "Bare array form",
+      "$ref": "#/$defs/idList"
+    }
+  ],
+  "$defs": {
+    "idList": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "description": "A stable passage id, e.g. 'p001'. Passage ids are yours to assign during Stage 1; keep them stable so the split stays auditable across runs."
+      }
+    }
+  },
+  "examples": [
+    { "passages": ["p001", "p002", "p003", "p004", "p005"] },
+    ["p001", "p002", "p003", "p004", "p005"]
+  ]
+}

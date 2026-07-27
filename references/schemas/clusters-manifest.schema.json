@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ariel-lee-1023/persona-distiller/main/references/schemas/clusters-manifest.schema.json",
+  "title": "clusters/manifest.json",
+  "description": "Stage 1 output. Index of the segmented corpus. One entry per cluster — a coherent unit that can carry independent evidence. The projectibility probe requires a regularity to appear in at least two independent clusters, so cluster identity is load-bearing, not cosmetic.",
+  "type": "object",
+  "required": ["clusters"],
+  "additionalProperties": false,
+  "properties": {
+    "clusters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cluster" }
+    }
+  },
+  "$defs": {
+    "cluster": {
+      "type": "object",
+      "required": ["id", "label", "source", "kind", "tokens"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^c[0-9]{2,}$",
+          "description": "Stable cluster id, e.g. 'c01'. Referenced by extractions.json."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable origin, e.g. 'Book: <title> ch.3'."
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to the extracted plain text this cluster came from, relative to the work dir, e.g. 'raw/book.txt'."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["monologue", "dialogue", "decision_record"],
+          "description": "Drives auto-weighting in Stage 3. Dialogue and decision_record tokens both count toward dialogue_ratio in the coverage map."
+        },
+        "period": {
+          "type": "string",
+          "description": "Year or span the cluster belongs to, e.g. '2018' or '2011-2014'. Omit when undatable."
+        },
+        "tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Approximate token count. A two-sentence cluster corroborates nothing — keep each large enough to be meaningful."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "clusters": [
+        {
+          "id": "c01",
+          "label": "Book: <title> ch.3",
+          "source": "raw/book.txt",
+          "kind": "monologue",
+          "period": "2018",
+          "tokens": 4200
+        }
+      ]
+    }
+  ]
+}

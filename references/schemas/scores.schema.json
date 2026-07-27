@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ariel-lee-1023/persona-distiller/main/references/schemas/scores.schema.json",
+  "title": "scores.json",
+  "description": "Stage 3 output — the curation audit log. Every keep/cut decision is recorded with its five probe scores and a one-line reason, so the whole curation is inspectable, defensible, and reproducible.",
+  "type": "object",
+  "required": ["weights", "decisions"],
+  "additionalProperties": false,
+  "properties": {
+    "weights": {
+      "$ref": "#/$defs/probeScores",
+      "description": "The composite weights actually used for this run. Defaults: projectibility 0.30, cost_refusal 0.25, expressive_match 0.20, interactional 0.15, preoccupation 0.10. Should sum to 1.0 after any auto-weighting and renormalisation."
+    },
+    "weight_notes": {
+      "type": "string",
+      "description": "Why the weights differ from the defaults, or a note that they do not — e.g. 'dialogue_ratio 0.35 → interactional 0.15 (unchanged)'. Record every change so the run stays reproducible."
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/decision" }
+    }
+  },
+  "$defs": {
+    "probeScores": {
+      "type": "object",
+      "required": ["projectibility", "cost_refusal", "expressive_match", "interactional", "preoccupation"],
+      "additionalProperties": false,
+      "properties": {
+        "projectibility": { "type": "number", "minimum": 0, "maximum": 1 },
+        "cost_refusal": { "type": "number", "minimum": 0, "maximum": 1 },
+        "expressive_match": { "type": "number", "minimum": 0, "maximum": 1 },
+        "interactional": { "type": "number", "minimum": 0, "maximum": 1 },
+        "preoccupation": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["id", "type", "scores", "composite", "decision", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^e[0-9]{3,}$",
+          "description": "Element id from extractions.json."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["expression", "modulation", "regularity", "cost_refusal", "interactional", "preoccupation"]
+        },
+        "scores": { "$ref": "#/$defs/probeScores" },
+        "composite": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weighted sum of scores. The hard deletion rule cuts anything below 0.55 — but note that an element above 0.55 is still cut unconditionally if it introduces generic language, forces meta-commentary, or conflicts with a higher-scoring core voice feature."
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["core", "references", "cut"],
+          "description": "Where the element landed. 'core' entries fill the ~5k-token budget by class priority first, then composite within class."
+        },
+        "rank": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Position within the core after class-priority ranking. Present only when decision is 'core'."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One line. Why this element was kept or cut."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "decision": { "const": "core" } },
+            "required": ["decision"]
+          },
+          "then": { "required": ["rank"] }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "weights": {
+        "projectibility": 0.30,
+        "cost_refusal": 0.25,
+        "expressive_match": 0.20,
+        "interactional": 0.15,
+        "preoccupation": 0.10
+      },
+      "weight_notes": "dialogue_ratio 0.35 → interactional 0.15 (unchanged)",
+      "decisions": [
+        {
+          "id": "e017",
+          "type": "cost_refusal",
+          "scores": {
+            "projectibility": 0.9,
+            "cost_refusal": 1.0,
+            "expressive_match": 0.4,
+            "interactional": 0.8,
+            "preoccupation": 0.7
+          },
+          "composite": 0.80,
+          "decision": "core",
+          "rank": 2,
+          "reason": "incentive-vs-characteristic divergence attested in 3 clusters; predicts well"
+        },
+        {
+          "id": "e041",
+          "type": "expression",
+          "scores": {
+            "projectibility": 0.1,
+            "cost_refusal": 0.0,
+            "expressive_match": 0.5,
+            "interactional": 0.0,
+            "preoccupation": 0.0
+          },
+          "composite": 0.10,
+          "decision": "cut",
+          "reason": "bare sentence-length average; generic; below threshold"
+        }
+      ]
+    }
+  ]
+}

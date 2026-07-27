@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ariel-lee-1023/persona-distiller/main/references/schemas/fidelity.schema.json",
+  "title": "fidelity.json",
+  "description": "Results of the pre-assembly gates (run before Stage 4) and the final Stage 5 verification. Both phases are recorded so the curation loop is auditable. Mirror the same facts into the persona's provenance.md in prose/table form.",
+  "type": "object",
+  "required": ["projection", "cost", "style"],
+  "additionalProperties": false,
+  "properties": {
+    "projection": {
+      "type": "object",
+      "description": "Held-out projection test. The gate phase runs on top-ranked projectible regularities before assembly; the final phase re-checks the assembled core.",
+      "required": ["gate", "final", "seed", "n_masked"],
+      "additionalProperties": false,
+      "properties": {
+        "gate": {
+          "type": "object",
+          "required": ["overall", "passed"],
+          "additionalProperties": false,
+          "properties": {
+            "overall": { "type": "number", "minimum": 0, "maximum": 1 },
+            "passed": {
+              "type": "boolean",
+              "description": "False here means re-curate. Assembly is always downstream of passing; a failed gate sends you back to Stage 3, never forward to the template."
+            },
+            "recurations": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many re-curation loops the gate forced."
+            },
+            "note": { "type": "string", "description": "What changed between passes." }
+          }
+        },
+        "final": {
+          "type": "object",
+          "required": ["overall"],
+          "additionalProperties": false,
+          "properties": {
+            "overall": { "type": "number", "minimum": 0, "maximum": 1 },
+            "by_domain": {
+              "type": "object",
+              "description": "Per-domain projection scores. Low scorers become explicit 'trust this less' caveats in the coverage report.",
+              "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "description": "Seed passed to holdout_split.py. Records the split so the test is repeatable."
+        },
+        "n_masked": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of masked passages. Must match n_masked in the split holdout_split.py produced."
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "description": "Cost/presence assertion. The hard minimum: if the corpus contains any high-signal cost-bearing refusal or interactional move, the core must contain at least one. Failing this blocks delivery.",
+      "required": ["total_divergences", "slated_for_core", "in_core_final", "presence_assertion"],
+      "additionalProperties": false,
+      "properties": {
+        "total_divergences": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Every attested incentive-vs-characteristic divergence inventoried at Stage 2."
+        },
+        "slated_for_core": { "type": "integer", "minimum": 0, "description": "Confirmed by the cost gate before assembly." },
+        "in_core_final": { "type": "integer", "minimum": 0, "description": "Actually present in the assembled core." },
+        "logged_out": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dropped deliberately, with the reason logged."
+        },
+        "missing_unlogged": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dropped without a logged reason. Must be 0 at delivery — any non-zero value means go re-curate."
+        },
+        "presence_assertion": {
+          "type": "string",
+          "enum": ["pass", "fail"],
+          "description": "'fail' blocks delivery. This is the most common way a core ends up articulate but generic."
+        }
+      }
+    },
+    "style": {
+      "type": "object",
+      "description": "Style-match test. Sample passages generated under the expression rules, re-measured with style_metrics.py, compared against held-out originals.",
+      "required": ["modulation_reproduced"],
+      "additionalProperties": false,
+      "properties": {
+        "sentence_len_delta": { "type": "number", "minimum": 0, "description": "Normalised absolute difference from the held-out originals." },
+        "hedge_rate_delta": { "type": "number", "minimum": 0 },
+        "modulation_reproduced": {
+          "type": "boolean",
+          "description": "Whether register shifts under pressure/audience/stakes are reproduced, not just the averages. False is a real failure even when the averages match — the modulation is the individuating part."
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+  "examples": [
+    {
+      "projection": {
+        "gate": {
+          "overall": 0.58,
+          "passed": true,
+          "recurations": 1,
+          "note": "1st pass 0.44 (economics over-fit) → re-curated → 0.58"
+        },
+        "final": {
+          "overall": 0.74,
+          "by_domain": { "political philosophy": 0.82, "economics": 0.55 }
+        },
+        "seed": 42,
+        "n_masked": 12
+      },
+      "cost": {
+        "total_divergences": 9,
+        "slated_for_core": 9,
+        "in_core_final": 8,
+        "logged_out": 1,
+        "missing_unlogged": 0,
+        "presence_assertion": "pass"
+      },
+      "style": {
+        "sentence_len_delta": 0.08,
+        "hedge_rate_delta": 0.03,
+        "modulation_reproduced": true,
+        "notes": "clipping-under-contest present"
+      }
+    }
+  ]
+}

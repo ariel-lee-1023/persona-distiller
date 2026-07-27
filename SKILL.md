@@ -64,9 +64,10 @@ never inside the embodiment artifact. You keep full auditability; the persona ke
 
 ## Inputs
 
-**Required:** one or more uploaded files, or a directory, of the person's public record — PDF,
-EPUB, DOCX, TXT, Markdown, HTML, or transcripts. Mixed formats are fine. Files arrive under
-`/mnt/user-data/uploads/`.
+**Required:** one or more files, or a directory, of the person's public record — PDF, EPUB, DOCX,
+TXT, Markdown, HTML, or transcripts. Mixed formats are fine. Where those files live depends on the
+host (see **Host environment** below); if the location is not given, ask for it rather than
+guessing.
 
 **Optional:** a focus statement, e.g. "decision style in public controversies" or "overall
 voice for analysis tasks". If omitted, default to overall identification.
@@ -74,6 +75,30 @@ voice for analysis tasks". If omitted, default to overall identification.
 Output quality is strictly bounded by corpus coverage, diversity, and signal density. If the
 corpus is thin, you produce a smaller, honestly-scoped core — you never fabricate probes to
 fill it out.
+
+---
+
+## Host environment
+
+This skill makes no assumption about which agent runs it or what the filesystem looks like. Three
+locations are host-dependent; resolve each **once, at the start of the run**, and reuse the
+resolved paths throughout.
+
+| What | How to resolve |
+|---|---|
+| **Corpus in** | Whatever the user points you at. Some hosts stage uploads in a fixed directory (on claude.ai, `/mnt/user-data/uploads/`); others expect a path or a working-tree location. If unstated, ask. |
+| **Work dir** | Create one. Default to `persona_work/` under the current working directory. Prefer a host-provided scratch or temp location when one exists. Create it before Stage 1 — nothing later works without it. |
+| **Persona out** | Wherever the host delivers artifacts to the user (on claude.ai, `/mnt/user-data/outputs/`); otherwise the current working directory, unless the user says otherwise. |
+
+Two further portability rules:
+
+- **Tools are optional, never assumed.** Where a stage suggests a document-reading tool, a
+  converter, or a companion skill, treat it as a preference. If the host does not have it, fall
+  back to the stdlib route named alongside it. Both scripts in `scripts/` are standard-library-only
+  and run under any Python 3.
+- **If the work dir lands inside a git repository**, ensure it is ignored before writing to it.
+  It fills with extracted full text of the source corpus, which must not be committed. This
+  repository's own `.gitignore` covers the default name.
 
 ---
 
@@ -87,7 +112,8 @@ Read the corpus. Extract text with structure preserved (headings, speaker turns,
 Segment into coherent **clusters** — per work/chapter, per interview, per decision record, per
 time period. Build an internal **coverage map**: domains covered, dialogue-vs-monologue ratio,
 decision density, temporal spread. This map drives later auto-weighting and the honest coverage
-report. → See `references/pipeline.md` (Stage 1) for extraction routing by file type.
+report. → See `references/pipeline.md` (Stage 1) for extraction routing by file type, and
+`references/schemas/` for the validatable shape of every intermediate JSON artifact.
 
 ### Stage 2 — Multi-granularity extraction
 Run three passes over the segmented corpus:
@@ -177,8 +203,9 @@ A directory containing:
   attested passages, and a provenance index mapping each module to its source file.
 
 Name the output directory with a user-supplied or auto-generated slug + `-perspective`
-(e.g. `deneen-perspective`). If a persona of that name already exists, offer incremental
-**fold-in** of the new corpus with re-curation rather than a blind overwrite.
+(e.g. `deneen-perspective`), and write it to the persona-out location resolved at the start of the
+run. If a persona of that name already exists, offer incremental **fold-in** of the new corpus with
+re-curation rather than a blind overwrite.
 
 Then hand the user a short **coverage report** (this is where honesty lives): what the corpus
 covered well, where it was thin, the fidelity-test scores, and any domains where the persona
@@ -225,10 +252,16 @@ patterns (lean front-loaded core, on-demand reference files, tight token budgets
   layout, with a filled example.
 - `references/fidelity-tests.md` — Stage 5: projection / cost / style-match procedures, thresholds,
   and reporting.
+- `references/schemas/` — JSON Schema (draft 2020-12) for every intermediate artifact
+  (`clusters/manifest.json`, `coverage_map.json`, `extractions.json`, `scores.json`,
+  `fidelity.json`, and the `passages.json` input to `holdout_split.py`). The snippets in the prose
+  references are illustrative and some carry `//` comments; these schemas are authoritative and
+  parseable. Consult one before writing the corresponding artifact.
 
 ## Scripts
 - `scripts/style_metrics.py` — computes countable expression features (sentence-length
   distribution, hedge/booster rates, punctuation rhythm, lexical diversity, person-reference
   ratios, top content terms/bigrams) for a text file or directory. Stdlib only; no install.
 - `scripts/holdout_split.py` — reproducible seeded split of passages into keep/masked sets for
-  the held-out projection test.
+  the held-out projection test. Takes a JSON list of passage IDs (see
+  `references/schemas/passages.schema.json`) or `--ids` on the command line — not a corpus path.
