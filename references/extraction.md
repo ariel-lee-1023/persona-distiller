@@ -31,9 +31,19 @@ high-value element, whereas the bare average is low-value and probably generic.
 
 Emit each stable feature and each modulation pattern as separate candidate elements.
 
+Run this pass on **firsthand clusters only**. Secondhand paraphrase carries the paraphraser's
+sentence rhythm, not the subject's, and averaging the two produces a voice belonging to neither.
+
 > Caution: it is tempting to fill the persona with this pass because it is easy and produces tidy
 > numbers. Resist. Most raw style metrics score low on identification once you account for how
 > generic they are. Keep the *distinctive mix* and the *modulation*; discard the rest.
+
+What survives this pass has two destinations, and the split happens in Stage 3: the few most
+identifying features go to the core's "How I sound" (capped at ~20% of it), and everything else
+that survived the deletion rule goes to **`references/voice.md`** — the standing expressive-system
+module. So extract the full picture here rather than pre-trimming to what a core could hold; in
+particular, the **conspicuously absent** words and the per-register numbers have a home now, and
+they are among the most useful things this pass produces.
 
 ---
 

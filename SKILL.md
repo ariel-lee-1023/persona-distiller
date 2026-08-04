@@ -156,11 +156,20 @@ Log every keep/cut with its probe scores and a one-line reason so the decision i
 **Elevation rule (hard):** the weights alone are not enough — style metrics are abundant and
 cost-refusals are sparse, so raw ranking lets volume crowd the fingerprints out. So rank survivors
 by **class priority first** (cost-refusal ≈ projectible regularity > interactional > variation >
-preoccupation > stable style), then by composite *within* class, filling the core to the ~5k-token
-budget. Cost-bearing refusals, standing commitments, and variation/modulation patterns get first
-claim on core space and are retained even when sparser than style metrics; pure style averages may
-fill **at most ~20%** of the core. Everything else attested goes to references. → Worked scoring
-examples, the elevation mechanics, weight-tuning, and the log format: `references/scoring.md`.
+preoccupation > stable style), then by composite *within* class. Cost-bearing refusals, standing
+commitments, and variation/modulation patterns get first claim on core space and are retained even
+when sparser than style metrics; pure style averages may fill **at most ~20%** of the core.
+Everything else attested goes to references.
+
+**Core budget (computed, not fixed):** size the core to the diagnostic material that survived,
+bounded by what the corpus supports — `supply = 2,200 + 250·min(n_cost_refusal,6) +
+180·min(n_projectible,7) + 140·min(n_interactional,5) + 120·min(n_variation,4)`, clamped between a
+**3,000 floor** and a `coverage_map`-derived ceiling (**4,000** thin or `firsthand_ratio` < 0.50 /
+**5,500** mid / **6,500** large and multi-period). Preoccupation and style contribute nothing to
+supply. Landing under the floor means the pool is too thin, not that the core needs filler: revisit
+the 0.45–0.55 cut band for diagnostic classes only, then ship reduced-scope and say so. → The
+formula, the floor procedure, worked scoring examples, weight-tuning, and the log format:
+`references/scoring.md`.
 
 ### Gate before Stage 4 — mandatory, and it feeds back *(do not skip)*
 Assembly is downstream of passing two gates. Their results are logged to the persona's
@@ -181,7 +190,16 @@ correct) template and inheriting its bias. → `references/fidelity-tests.md`.
 Write the core `SKILL.md` (embodiment artifact) and the `references/` package (depth + episodic
 content + provenance). The core follows a fixed template and obeys the no-meta rule absolutely.
 Episodic content and lower-scoring-but-attested passages live in references, never the core.
-→ Exact templates and directory layout: `references/output-template.md`.
+
+Two reference modules are **standing and co-equal**: `frameworks.md` (what the person thinks with)
+and `voice.md` (how the person sounds). The 20% style cap keeps the core a fingerprint, but a
+fingerprint is not enough to *write* as someone at length, so the rest of the expressive system —
+favored and **avoided** constructions, modulation rules, register range, lexical fingerprint, the
+measured `style_metrics.py` baseline, and anti-drift pairs — is written to `voice.md` from firsthand
+clusters only, and the core's loading block tells the host to load it before any sustained prose.
+The cap routes surplus style there; it does not discard it. Material cut under the 0.55 rule stays
+cut — `voice.md` takes the demoted, never the deleted.
+→ Exact templates, the `voice.md` spec, and directory layout: `references/output-template.md`.
 
 ### Stage 5 — Final fidelity verification *(the gates already ran at 3.5; this confirms the assembled core)*
 - **Projection re-check** — confirm the assembled persona's reasoning still predicts the masked
@@ -191,8 +209,11 @@ Episodic content and lower-scoring-but-attested passages live in references, nev
   assert the hard minimum: **if the corpus contains any high-signal cost-bearing refusal or
   interactional move, the core must contain at least one.** Failing this blocks delivery — go
   re-curate; it is the most common way a core ends up articulate but generic.
-- **Style-match test** — generate sample passages under the expression rules, re-run
-  `style_metrics.py`, and compare feature distributions *and modulation* against held-out originals.
+- **Style-match test** — generate sample passages under the core's expression rules **plus
+  `voice.md`** (that pair is the sustained-prose configuration, so that is what gets tested),
+  including one contested prompt and one long enough to drift; re-run `style_metrics.py`; compare
+  feature distributions *and modulation* against held-out originals; and confirm nothing on the
+  avoid-list appears.
 
 Log all three results to `provenance.md` and the coverage report. If a check falls below threshold,
 emit a **reduced-scope** core with the gap logged, or surface it to the user for corpus improvement
@@ -203,11 +224,18 @@ emit a **reduced-scope** core with the gap logged, or surface it to the user for
 ## Output
 
 A directory containing:
-- **`SKILL.md`** — the core embodiment artifact, targeted **under 5,000 tokens**, front-loaded
-  (compaction truncates from the end, so highest-value fingerprints come first).
-- **`references/`** — modular files sized for on-demand loading (~800–2,000 tokens each): one per
-  high-value source cluster, a glossary of the person's named frameworks, episodic/lower-scoring
-  attested passages, and a provenance index mapping each module to its source file.
+- **`SKILL.md`** — the core embodiment artifact, sized to the **computed budget** (typically
+  3,000–5,500 tokens; floor 3,000, ceiling 4,000–6,500 by corpus), front-loaded (compaction
+  truncates from the end, so highest-value fingerprints come first).
+- **`references/`** — modular files sized for on-demand loading. Two are **standing, cross-corpus
+  modules of equal status**: `frameworks.md` (the person's named constructs, defined in their sense)
+  and `voice.md` (the measured expressive system — favored and *avoided* constructions, modulation
+  rules, register range, lexical fingerprint, the `style_metrics.py` baseline, and anti-drift
+  pairs). The rest are per-source or residual: one module per high-value source cluster,
+  `episodic.md` for demoted attested material, and `provenance.md` mapping each core element to its
+  source. Sizes: cluster modules ~1,500–4,000 tokens each (hard ceiling 6,000 — split rather than
+  trim), `frameworks.md` / `voice.md` / `episodic.md` soft ~4,000, `provenance.md` uncapped since it
+  is an audit file.
 
 Name the output directory with a user-supplied or auto-generated slug + `-perspective`
 (e.g. `deneen-perspective`), and write it to the persona-out location resolved at the start of the

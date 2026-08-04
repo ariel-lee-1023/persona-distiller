@@ -4,9 +4,57 @@
   "title": "scores.json",
   "description": "Stage 3 output — the curation audit log. Every keep/cut decision is recorded with its five probe scores and a one-line reason, so the whole curation is inspectable, defensible, and reproducible.",
   "type": "object",
-  "required": ["weights", "decisions"],
+  "required": ["weights", "core_budget", "decisions"],
   "additionalProperties": false,
   "properties": {
+    "core_budget": {
+      "type": "object",
+      "required": ["supply", "ceiling", "ceiling_rule", "budget", "floor_triggered", "counts"],
+      "additionalProperties": false,
+      "description": "The computed core size and its inputs. The core budget is a function of surviving diagnostic material, not a constant — recording it here is what makes the size reproducible and reviewable. See scoring.md for the formula.",
+      "properties": {
+        "supply": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "2200 + 250·min(n_cost_refusal,6) + 180·min(n_projectible,7) + 140·min(n_interactional,5) + 120·min(n_variation,4). Preoccupation and stable style contribute nothing — they fill space the diagnostics earned."
+        },
+        "ceiling": {
+          "type": "integer",
+          "enum": [4000, 5500, 6500],
+          "description": "The corpus ceiling from coverage_map.json: 4000 if firsthand_ratio < 0.50, or total_tokens < 50k, or n_clusters < 4; 5500 if total_tokens < 250k or n_clusters < 9; else 6500."
+        },
+        "ceiling_rule": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Which ceiling row matched, e.g. 'firsthand_ratio<0.50' or 'total_tokens<250k'. First match wins."
+        },
+        "budget": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "clamp(supply, 3000, ceiling). The rendered SKILL.md including frontmatter is measured against this with ±10% tolerance."
+        },
+        "floor_triggered": {
+          "type": "boolean",
+          "description": "True when supply fell below the 3000 floor. The floor is a diagnostic trigger, never a padding target: re-examine the 0.45–0.55 cut band for diagnostic classes only, check for upstream under-extraction, and failing both ship a reduced-scope core with the shortfall logged. Never top up with stable_style material to reach it."
+        },
+        "floor_resolution": {
+          "type": "string",
+          "description": "Required in practice when floor_triggered is true: which of the three floor steps resolved it, or that the core shipped reduced-scope. Mirrors the note in provenance.md."
+        },
+        "counts": {
+          "type": "object",
+          "required": ["cost_refusal", "projectible", "interactional", "variation"],
+          "additionalProperties": false,
+          "description": "Survivor counts by class feeding the supply term, before the budget decides how many are actually written into the core.",
+          "properties": {
+            "cost_refusal": { "type": "integer", "minimum": 0 },
+            "projectible": { "type": "integer", "minimum": 0 },
+            "interactional": { "type": "integer", "minimum": 0 },
+            "variation": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
     "weights": {
       "$ref": "#/$defs/probeScores",
       "description": "The composite weights actually used for this run. Defaults: projectibility 0.30, cost_refusal 0.25, expressive_match 0.20, interactional 0.15, preoccupation 0.10. Should sum to 1.0 after any auto-weighting and renormalisation."
@@ -58,7 +106,7 @@
         "decision": {
           "type": "string",
           "enum": ["core", "references", "cut"],
-          "description": "Where the element landed. 'core' entries fill the ~5k-token budget by class priority first, then composite within class."
+          "description": "Where the element landed. 'core' entries fill core_budget.budget by class priority first, then composite within class."
         },
         "rank": {
           "type": "integer",
@@ -92,6 +140,14 @@
         "preoccupation": 0.10
       },
       "weight_notes": "dialogue_ratio 0.35 → interactional 0.15 (unchanged)",
+      "core_budget": {
+        "supply": 4510,
+        "ceiling": 5500,
+        "ceiling_rule": "total_tokens<250k",
+        "budget": 4510,
+        "floor_triggered": false,
+        "counts": { "cost_refusal": 3, "projectible": 5, "interactional": 3, "variation": 2 }
+      },
       "decisions": [
         {
           "id": "e017",

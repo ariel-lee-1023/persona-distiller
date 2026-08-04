@@ -25,6 +25,8 @@ Two design commitments follow from that:
 
 2. **Delete without mercy.** A tight ~4k-token core that nails the fingerprints beats a comprehensive 15k-token one that reads like everyone. Anything scoring below threshold, reading as generic, or conflicting with a higher-scoring voice feature gets cut — not softened, not averaged in.
 
+Spending the budget elsewhere is not the same as throwing style away. Measured expression that survives the deletion rule but loses the competition for core space is *relocated*, not discarded: it goes to `references/voice.md`, a standing module the host loads before writing sustained prose in the voice. The core stays a fingerprint; the voice stays complete.
+
 ### The honesty split
 
 The generated persona contains **no uncertainty disclaimers, no provenance hedging, no meta framing**. Those move a reader out of the voice and destroy identification.
@@ -157,12 +159,13 @@ Hard deletion rule below 0.55 composite. Hard elevation rule ranks survivors by 
 
 A directory named `<slug>-perspective` containing:
 
-- **`SKILL.md`** — the core embodiment artifact, targeted under 5,000 tokens, front-loaded (compaction truncates from the end, so the highest-value fingerprints come first).
-- **`references/`** — modular files sized for on-demand loading (~800–2,000 tokens each): one per high-value source cluster, a glossary of the person's named frameworks, episodic and lower-scoring attested passages, and a provenance index mapping each module to its source.
+- **`SKILL.md`** — the core embodiment artifact, front-loaded (compaction truncates from the end, so the highest-value fingerprints come first). Its size is **computed, not fixed**: a supply term over the diagnostic elements that survived curation — cost-bearing refusals, projectible regularities, interactional moves, modulation patterns; preoccupations and style contribute nothing — clamped between a **3,000-token floor** and a corpus-derived ceiling of 4,000 (thin or mostly-secondhand), 5,500 (mid), or 6,500 (large, multi-period). Typical cores land at 3,000–5,500.
+- **`references/`** — modular files sized for on-demand loading. Two are **standing, cross-corpus modules of equal status** — `frameworks.md`, what the person thinks with, and `voice.md`, how the person sounds. The rest are per-source or residual: one module per high-value source cluster, `episodic.md` for demoted attested material, `provenance.md` for the audit trail. Sizes: cluster modules ~1,500–4,000 tokens each (hard ceiling 6,000 — split by period or theme rather than trimming evidence), `frameworks.md` / `voice.md` / `episodic.md` soft ~4,000, and `provenance.md` uncapped because an audit file's completeness matters more than its size.
+- **`references/voice.md`** — the measured expressive system, and the reason the core's 20% style cap is safe. A fingerprint-sized "How I sound" is enough to *frame* an answer in someone's voice; it is not enough to *write* one at length. So the rest of the system lives here: favored constructions with attested fragments, the **avoid-list** (the words and openings conspicuously missing from the corpus — as diagnostic as the favored ones, and previously homeless), modulation rules as trigger → shift pairs, register range across settings and periods, lexical fingerprint, the `style_metrics.py` baseline the fidelity test measures against, and anti-drift pairs for long generations. Built from firsthand clusters only. The host loads it before any sustained prose in the voice.
 
 Plus a short **coverage report** delivered in conversation: what the corpus covered well, where it was thin, the fidelity-test scores, and any domain where the persona should be trusted less.
 
-Output quality is strictly bounded by corpus coverage, diversity, and signal density. A thin corpus yields a smaller, honestly-scoped core — never fabricated probes padding it out to hit a size target.
+Output quality is strictly bounded by corpus coverage, diversity, and signal density. A thin corpus yields a smaller, honestly-scoped core — never fabricated probes padding it out to hit a size target. That is also why the floor is a *trigger*, not a quota: falling under it sends you back to re-examine borderline cuts among the diagnostic classes, and failing that, to ship a reduced-scope core and say so in the coverage report.
 
 ---
 
@@ -176,7 +179,7 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 │   ├── pipeline.md                 # Stage 1 mechanics, extraction routing, coverage map schema
 │   ├── extraction.md               # Stage 2 taxonomy and cost-bearing catalogue
 │   ├── scoring.md                  # Stage 3 probes, worked examples, audit-log format
-│   ├── output-template.md          # Stage 4 core template + package layout
+│   ├── output-template.md          # Stage 4 core template, voice.md spec, package layout
 │   ├── fidelity-tests.md           # Stage 5 procedures, thresholds, reporting
 │   └── schemas/                    # JSON Schema for every intermediate artifact
 │       ├── clusters-manifest.schema.json

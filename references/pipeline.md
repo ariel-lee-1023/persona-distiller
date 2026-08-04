@@ -109,6 +109,7 @@ report and of several auto-weighting defaults.
 {
   "total_tokens": 128000,
   "n_clusters": 14,
+  "firsthand_ratio": 0.82,           // firsthand tokens / total — set during acquisition
   "domains": ["political philosophy", "religion", "economics"],
   "dialogue_ratio": 0.35,            // dialogue+decision tokens / total
   "decision_density": 0.12,          // decision-record tokens / total
@@ -125,6 +126,9 @@ Use it to:
   coverage report handed to the user (never in the persona).
 - **Bound scope** — if `total_tokens` is very low or `domains` is one narrow slice, plan for a
   reduced-scope core up front.
+- **Set the core's ceiling** — `total_tokens`, `n_clusters`, `firsthand_ratio`, and the number of
+  periods in `temporal_spread` pick the ceiling row in the Stage 3 core-budget computation
+  (`scoring.md`). Get these right here; Stage 3 does not recompute them.
 
 ## Handoff to Stage 2
 

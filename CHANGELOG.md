@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The core's token budget is now computed per run, not fixed at ~5,000.** The flat cap was the
+  wrong instrument in both directions: it was never binding in practice (shipped cores landed at
+  2,000–4,600 tokens, so it disciplined nothing), and it had no lower edge at all, so a
+  under-curated 2,000-token core passed every check the skill made. The budget is now a **supply
+  term** over the diagnostic material that actually survived curation — `2,200 +
+  250·min(n_cost_refusal,6) + 180·min(n_projectible,7) + 140·min(n_interactional,5) +
+  120·min(n_variation,4)` — clamped between a floor and a corpus-derived ceiling. Preoccupation and
+  stable style contribute nothing to supply: they fill space the diagnostics have already earned,
+  and letting abundant style buy more room is the exact inversion the skill exists to prevent.
+- **Ceilings come from `coverage_map.json`**, first match winning: 4,000 when `firsthand_ratio` <
+  0.50 or the corpus is small (< 50k tokens or < 4 clusters), 5,500 mid, 6,500 for a large
+  multi-period corpus. A persona built mostly from other people's words does not get to be large.
+- **Reference module budgets split by file type**, replacing the single ~800–2,000 range that every
+  shipped persona already violated by 2–4×: `clusters/*.md` ~1,500–4,000 with a hard 6,000 ceiling
+  (split by period or theme rather than trimming evidence), `frameworks.md` and `episodic.md` soft
+  ~4,000, and `provenance.md` uncapped — it is one row per core element and is not loaded during
+  embodiment, so completeness beats size.
+- `references/pipeline.md`: `firsthand_ratio` is now shown in the `coverage_map.json` example (it
+  was only described in `acquisition.md`), and the coverage map's stated jobs include picking the
+  core's ceiling row.
+
+### Added
+
+- **`references/voice.md` — a standing expressive-system module, co-equal with `frameworks.md`.**
+  The 20% style cap keeps the core a fingerprint, and that is right, but a fingerprint is enough to
+  *frame* an answer in someone's voice and not to *write* one at length — so the cap on its own left
+  the skill promising more embodiment than it shipped. The rest of the system now has a home: favored
+  constructions with attested fragments, the **avoid-list** (words and openings conspicuously missing
+  from the corpus — as diagnostic as the favored ones, and until now homeless despite Pass A being
+  told to measure them), modulation rules as trigger → shift pairs, register range across settings
+  and periods, lexical fingerprint, the `style_metrics.py` measured baseline, and anti-drift pairs
+  for long generations. Built from **firsthand clusters only**. The two standing modules are now the
+  deliverable pair: what the person thinks with, and how the person sounds.
+- **The style cap became a routing rule, not a discard rule.** Surplus expression and modulation
+  elements go to `voice.md` rather than being scattered into `episodic.md` or lost; material cut
+  under the 0.55 deletion rule stays cut. `voice.md` takes the demoted, never the deleted — otherwise
+  it becomes the stylometry report the core was protected from. `episodic.md` no longer holds
+  expression/modulation at all.
+- **The style-match test now runs the configuration that ships.** Samples are generated under the
+  core **plus `voice.md`** — that pair is the sustained-prose configuration — with at least one
+  contested prompt and at least one sample long enough to drift (400+ words), since a voice that is
+  right for three sentences and generic by the twelfth is exactly what this test exists to catch. A
+  new `avoid_list_violations` count is required in `fidelity.json`: cheap, near-binary, and it
+  catches drift the distributions blur. Running the core alone is now described as a control, not
+  the test.
+- **A 3,000-token core floor, defined as a diagnostic trigger rather than a quota.** Landing under
+  it means the survivor pool is too thin for a full-scope core, and the response is ordered:
+  re-examine the 0.45–0.55 cut band for diagnostic classes only (the 0.55 threshold is tuned for an
+  abundant pool), check whether the shortfall is an upstream corpus fact rather than a curation
+  failure, and failing both, ship a reduced-scope core with the shortfall logged in `provenance.md`
+  and named in the coverage report. Topping the core up with `stable_style` material to reach the
+  floor is prohibited — it would breach the 20% style cap and produce exactly the fluent, correctly
+  sized, anyone-shaped core the design is built against.
+- `provenance.md` now records the computed budget, the ceiling row, the core's actual size, and any
+  floor resolution, so the core's *size* is auditable alongside its contents.
+
+### Breaking
+
+- **`fidelity.json` requires `style.avoid_list_violations`** (an integer; record `0` when the corpus
+  supported no avoid-list). Existing fidelity records will fail validation until the field is added.
+- **`scores.json` requires a new `core_budget` object** (supply, ceiling, ceiling_rule, budget,
+  floor_triggered, counts by class; `floor_resolution` when the floor was tripped). Logs written
+  before this change will fail schema validation — add the block, or re-derive it from the run's
+  coverage map and survivor counts. The ceiling is enumerated to `4000 | 5500 | 6500` so a budget
+  cannot quietly exceed what the corpus supports.
+
 ## [1.2.0] — 2026-07-27
 
 Remote corpus acquisition. The corpus path stopped being hardcoded in 1.1.0, but the corpus was

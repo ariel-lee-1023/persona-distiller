@@ -86,8 +86,11 @@ patterns get *first claim* on core space. Fill them in before any stable style f
 remaining budget down the priority ladder.
 
 **3. Style-metric cap.** Pure style averages (stable_style class) may occupy **at most ~20%** of the
-core's elements. If you are over the cap, the surplus style features go to references regardless of
-their composite — the core is a fingerprint, not a stylometry report.
+core's elements. If you are over the cap, the surplus style features go to **`references/voice.md`**
+regardless of their composite — the core is a fingerprint, not a stylometry report. The cap is a
+*routing* rule, not a discard rule: everything above it is kept, in the module built to hold it and
+loaded whenever sustained prose is written in the voice. Same for surplus modulation patterns.
+Elements cut under the 0.55 rule are still cut; `voice.md` takes the demoted, not the deleted.
 
 **4. Sparsity protection.** A high-signal cost-refusal or variation pattern that clears the ≥2-cluster
 bar is retained even if it is rarer than, and outscored on the composite by, an abundant style class.
@@ -97,8 +100,72 @@ Count never demotes a scarce diagnostic below a plentiful generic one.
 the core must carry **at least one**. This is asserted again at the Stage 5 presence check; enforce
 it here so it is true by construction, not by luck.
 
-Fill the core to the ~5k-token budget under these rules (see `output-template.md` for the section
-layout); everything else attested goes to references.
+Fill the core to the computed budget (next section) under these rules — see `output-template.md`
+for the section layout; everything else attested goes to references.
+
+## The core budget is computed, not fixed
+
+A flat cap is the wrong instrument. The core's job is to carry fingerprints, so its size should
+track **how much diagnostic material actually survived curation**, bounded by **what the corpus can
+honestly support** — not by a constant that a rich corpus under-uses and a thin one invites padding
+to reach. Compute the budget after the survivor set is ranked and before you fill it.
+
+**Step 1 — supply term.** Count survivors slated for the core by class (`n_*` are counts of
+survivors of that class, before the budget decides how many are actually written):
+
+```
+supply = 2,200
+       + 250 × min(n_cost_refusal,  6)     # incl. standing commitments
+       + 180 × min(n_projectible,   7)
+       + 140 × min(n_interactional, 5)
+       + 120 × min(n_variation,     4)
+```
+
+Preoccupation and stable_style contribute **nothing**. They never earn space; they fill space the
+diagnostics have already earned. Saturation is ~6,140 — a corpus that maxes every term.
+
+**Step 2 — corpus ceiling.** From `coverage_map.json`, first matching row wins:
+
+| condition | ceiling |
+|---|---|
+| `firsthand_ratio` < 0.50 | **4,000** |
+| `total_tokens` < 50k **or** `n_clusters` < 4 | **4,000** |
+| `total_tokens` < 250k **or** `n_clusters` < 9 | **5,500** |
+| otherwise (≥250k tokens, ≥9 clusters, ≥2 periods in `temporal_spread`) | **6,500** |
+
+**Step 3 — clamp.**
+
+```
+core_budget = clamp(supply, floor = 3,000, ceiling)
+```
+
+Measure against the rendered `SKILL.md` including frontmatter, ±10% tolerance. Record
+`core_budget`, its inputs, and which ceiling row applied at the top of `scores.json`.
+
+Worked: a dialogue-rich 180k-token corpus in 11 clusters yielding 3 cost-refusals, 5 regularities,
+3 interactional moves, 2 modulation patterns → supply 2,200+750+900+420+240 = **4,510**, ceiling
+5,500 → budget **4,510**. The same curation over a 30k-token corpus → ceiling 4,000 → budget
+**4,000**, and the two lowest-ranked survivors go to references.
+
+### The floor (3,000) is a diagnostic trigger, never a padding target
+
+If `supply` lands under 3,000, the survivor pool is too thin to embody the person at full scope. Do
+these in order — stop as soon as the pool clears:
+
+1. **Re-examine the 0.45–0.55 cut band**, but only for `cost_refusal`, `projectible`,
+   `interactional`, and `variation` candidates. The 0.55 threshold is tuned for an abundant pool; a
+   thin pool means it was applied to a pool it was not tuned for. The ≥2-cluster evidence bar stays
+   hard — re-scoring is not re-labelling.
+2. **Check for under-extraction upstream.** A monologic corpus routinely yields `n_interactional`
+   = 0; that is a corpus fact, not a curation failure, and Stage 2 will not find what is not there.
+   Confirm against `dialogue_ratio` before assuming the pass was lazy.
+3. **Ship a reduced-scope core below the floor.** Narrow what the persona claims in the frontmatter
+   description, log the shortfall and the computed `supply` in `provenance.md`, and name it in the
+   coverage report.
+
+Never top the core up with `stable_style` material to reach the floor. It would breach the 20% cap,
+and it is precisely the failure mode this whole design exists to prevent: a core that is fluent,
+correctly sized, and reads like anyone.
 
 ## Gate before assembly
 
@@ -127,6 +194,11 @@ inspectable and defensible.
   "weights": {"projectibility":0.30,"cost_refusal":0.25,"expressive_match":0.20,
               "interactional":0.15,"preoccupation":0.10},
   "weight_notes": "dialogue_ratio 0.35 → interactional 0.15 (unchanged)",
+  "core_budget": {
+    "supply": 4510, "ceiling": 5500, "ceiling_rule": "total_tokens<250k",
+    "budget": 4510, "floor_triggered": false,
+    "counts": {"cost_refusal":3,"projectible":5,"interactional":3,"variation":2}
+  },
   "decisions": [
     {"id":"e017","type":"cost_refusal",
      "scores":{"projectibility":0.9,"cost_refusal":1.0,"expressive_match":0.4,

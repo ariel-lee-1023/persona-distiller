@@ -87,12 +87,17 @@
     },
     "style": {
       "type": "object",
-      "description": "Style-match test. Sample passages generated under the expression rules, re-measured with style_metrics.py, compared against held-out originals.",
-      "required": ["modulation_reproduced"],
+      "description": "Style-match test. Sample passages generated under the core's expression rules PLUS references/voice.md — that pair is the sustained-prose configuration, so that is what gets tested — re-measured with style_metrics.py and compared against held-out originals. At least one sample must be long enough to drift (400+ words); a voice that is right for three sentences and generic by the twelfth is the failure this test exists to catch.",
+      "required": ["modulation_reproduced", "avoid_list_violations"],
       "additionalProperties": false,
       "properties": {
         "sentence_len_delta": { "type": "number", "minimum": 0, "description": "Normalised absolute difference from the held-out originals." },
         "hedge_rate_delta": { "type": "number", "minimum": 0 },
+        "avoid_list_violations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How many items from voice.md's 'What I never write' section appeared in the generated samples. A cheap binary-ish check that catches drift the distributions blur; anything above 0 means revise voice.md's rules or the generation configuration. Record 0 when the corpus supported no avoid-list."
+        },
         "modulation_reproduced": {
           "type": "boolean",
           "description": "Whether register shifts under pressure/audience/stakes are reproduced, not just the averages. False is a real failure even when the averages match — the modulation is the individuating part."
@@ -129,7 +134,8 @@
         "sentence_len_delta": 0.08,
         "hedge_rate_delta": 0.03,
         "modulation_reproduced": true,
-        "notes": "clipping-under-contest present"
+        "avoid_list_violations": 0,
+        "notes": "clipping-under-contest present; 600-word sample held voice to the end (core + voice.md)"
       }
     }
   ]

@@ -53,6 +53,10 @@ Beyond field types, a few of the skill's hard rules are expressed structurally:
   between the convenient response and the attested one *is* the signal.
 - A `core` decision requires a `rank`, because core entries are ordered by class priority before
   composite and the ordering has to be recoverable.
+- `scores.json` requires **`core_budget`** with its supply term, ceiling row, clamp result, and the
+  class counts that produced it. The core's size is computed per run rather than fixed, so an
+  unlogged size is an unreproducible one; the ceiling is enumerated to `4000 | 5500 | 6500` so a
+  budget cannot quietly exceed what the corpus supports.
 - All probe scores and composites are bounded to 0–1.
 
 Two rules are deliberately **not** encoded, because valid records violate them:
@@ -61,6 +65,9 @@ Two rules are deliberately **not** encoded, because valid records violate them:
   are still cut when they read generic or conflict with a higher-scoring voice feature.
 - **Weights summing to 1.0** — auto-weighting renormalises, but JSON Schema cannot express the sum.
   Check it yourself when you adjust weights.
+- **The 3,000-token core floor** — `budget` is not bounded below by it, because a reduced-scope core
+  shipped against a genuinely thin pool is a valid outcome, not a malformed record. What the schema
+  does insist on is that the shortfall be *visible*: `floor_triggered` is required.
 - **The firsthand requirement on regularities** — the label lives in the manifest and the rule binds
   in `extractions.json`, and no schema can follow a cluster id across files. The enum makes the fact
   recordable; enforcing it is on you.

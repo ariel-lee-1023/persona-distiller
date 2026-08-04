@@ -67,18 +67,29 @@ inventory and its in-core status to `provenance.md`.
 
 ## 3. Style-match test  (tests expression rules)
 
-1. Generate a few sample passages under the core's expression rules, on topics the corpus covers,
-   including at least one *contested* prompt so modulation is exercised.
+1. Generate a few sample passages under the core's expression rules **plus `references/voice.md`**,
+   on topics the corpus covers, including at least one *contested* prompt so modulation is
+   exercised, and at least one passage long enough to drift (400+ words — the failure this test
+   exists to catch is a voice that is right for three sentences and generic by the twelfth).
 2. Run `scripts/style_metrics.py` on those samples.
 3. Compare the feature distributions against held-out **original** samples (set some aside in
    Stage 2 for this). Look at sentence-length shape, hedge/booster rates, punctuation rhythm, and —
    importantly — whether the *modulation* reproduces (do the samples tighten under contest the way
    the originals do?).
+4. Check the avoid-list holds: none of `voice.md`'s "What I never write" items should appear in the
+   generated samples. This is a cheap, binary check and it catches drift the distributions blur.
+
+Test the pair as it will actually be used. The core alone is the *framing* configuration; the
+sustained-prose configuration is core + `voice.md`, and that is what the promise of embodiment is
+measured against. If it helps localize a failure, run the core alone as a control — a large gap
+that closes when `voice.md` loads means the module is doing its job, not that the core is broken.
 
 Report divergence qualitatively and on the key numbers. Large gaps mean the expression rules are
-wrong or too generic — revise the "How I sound" section. Small gaps on averages but a missing
-modulation pattern is a real failure even if the averages match, because the modulation is the
-individuating part.
+wrong or too generic — revise `voice.md` first (it holds most of the system), then the "How I
+sound" section. Small gaps on averages but a missing modulation pattern is a real failure even if
+the averages match, because the modulation is the individuating part. `voice.md`'s measured
+baseline block should be the same numbers this test compares against; if they disagree, the module
+was written from estimates rather than from a run — fix that before reading anything into the gap.
 
 ---
 
