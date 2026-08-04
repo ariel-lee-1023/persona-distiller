@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-08-04
+
+Sizing and voice. Two of the skill's constants turned out to be doing less work than they looked
+like they were doing. The ~5,000-token core cap never bound — shipped cores land at 2,000–4,600
+tokens — and had no lower edge, so it neither restrained a rich distillation nor caught a thin one;
+it is now a per-run computation with a floor. And the 20% style cap correctly kept the core a
+fingerprint, but a fingerprint is enough to *frame* an answer in someone's voice and not to *write*
+one at length, which left the skill promising more embodiment than it shipped; the rest of the
+expressive system now ships as `references/voice.md`, a standing module co-equal with
+`frameworks.md`.
+
+Major, because two intermediate-artifact schemas gained required fields.
+
 ### Changed
 
 - **The core's token budget is now computed per run, not fixed at ~5,000.** The flat cap was the
@@ -237,7 +250,8 @@ Initial public release.
 - **Scope statement** — perspective and thinking-style work only; explicit refusal of deceptive
   impersonation and forged attribution.
 
-[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/ariel-lee-1023/persona-distiller/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ariel-lee-1023/persona-distiller/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ariel-lee-1023/persona-distiller/releases/tag/v1.0.0
