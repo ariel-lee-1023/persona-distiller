@@ -126,7 +126,8 @@ report. → See `references/pipeline.md` (Stage 1) for extraction routing by fil
 Run three passes over the segmented corpus:
 - **Fine-grained expression pass** — countable features *and their modulation* across registers.
   Run `scripts/style_metrics.py` on the corpus (and per-cluster) so these are measured, not
-  guessed. Capture how features shift, not just their averages.
+  guessed — or `scripts/zh_metrics.py` for a Chinese corpus, where the Latin tokeniser returns
+  zeros. Capture how features shift, not just their averages.
 - **Coarse-grained projectible-regularity pass** — recurring thought-moves and decision
   heuristics. A regularity qualifies only if it (a) appears in ≥2 independent clusters and
   (b) predicts stance on held-out questions from the same corpus. Store with source clusters and
@@ -300,6 +301,12 @@ patterns (lean front-loaded core, on-demand reference files, tight token budgets
 - `scripts/style_metrics.py` — computes countable expression features (sentence-length
   distribution, hedge/booster rates, punctuation rhythm, lexical diversity, person-reference
   ratios, top content terms/bigrams) for a text file or directory. Stdlib only; no install.
+- `scripts/zh_metrics.py` — the same feature classes for a **Chinese** corpus, in the units
+  Chinese prose is measured in: sentence length in 汉字, Chinese hedges/boosters, punctuation
+  rhythm, person-reference ratios, character-n-gram fingerprint, and a discourse-scaffolding
+  absence check that feeds `voice.md`'s avoid-list. `style_metrics.py` tokenises on `[A-Za-z]`
+  and returns zeros on CJK, so reach for this one whenever the corpus is Chinese. Ships with no
+  term list — pass the subject's own vocabulary via `--terms` rather than baking it in.
 - `scripts/holdout_split.py` — reproducible seeded split of passages into keep/masked sets for
   the held-out projection test. Takes a JSON list of passage IDs (see
   `references/schemas/passages.schema.json`) or `--ids` on the command line — not a corpus path.

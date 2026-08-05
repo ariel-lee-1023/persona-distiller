@@ -71,7 +71,8 @@ inventory and its in-core status to `provenance.md`.
    on topics the corpus covers, including at least one *contested* prompt so modulation is
    exercised, and at least one passage long enough to drift (400+ words — the failure this test
    exists to catch is a voice that is right for three sentences and generic by the twelfth).
-2. Run `scripts/style_metrics.py` on those samples.
+2. Run `scripts/style_metrics.py` on those samples — `scripts/zh_metrics.py` for a Chinese
+   corpus, with the same flags used for the `voice.md` baseline, or the comparison is meaningless.
 3. Compare the feature distributions against held-out **original** samples (set some aside in
    Stage 2 for this). Look at sentence-length shape, hedge/booster rates, punctuation rhythm, and —
    importantly — whether the *modulation* reproduces (do the samples tighten under contest the way

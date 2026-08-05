@@ -145,9 +145,10 @@ person sounds.
    — good enough to keep, outranked by diagnostics. Anything cut under the 0.55 rule for being
    generic, meta-forcing, or conflicting **stays cut**. If `voice.md` reads like a stylometry
    report, the discipline has failed twice over.
-3. **Measured, never estimated.** Every number comes from an actual `scripts/style_metrics.py` run
-   over the firsthand clusters. No approximated distributions, no invented constructions, no
-   example fragment that is not attested.
+3. **Measured, never estimated.** Every number comes from an actual `scripts/style_metrics.py`
+   run over the firsthand clusters — `scripts/zh_metrics.py` for a Chinese corpus. Record which
+   script and which flags produced the table, so a reader can re-run it. No approximated
+   distributions, no invented constructions, no example fragment that is not attested.
 4. **Rules in voice; numbers as data.** The rule sections are written as instructions to self, with
    no meta — same standard as the core. The measured block is explicitly calibration data for the
    host agent, and the persona never speaks it.
