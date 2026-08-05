@@ -11,6 +11,9 @@ pass (fine-grained) is necessary but cheap; the two hard passes are where identi
 
 Countable style features **and their modulation**. Run `scripts/style_metrics.py` on the whole
 corpus and per cluster so you have real numbers, then read the *shifts*, not just the averages.
+For a Chinese corpus run `scripts/zh_metrics.py` instead — same feature classes, measured in 汉字,
+with Chinese hedge/booster sets; the Latin-tokenising script reports zeros and will quietly cost
+you the entire expression pass. Track the subject's own vocabulary with its `--terms` flag.
 
 Measure:
 - **Sentence-length distribution** — mean, median, spread, and the shape (does the person mix long

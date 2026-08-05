@@ -190,6 +190,7 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 │       └── passages.schema.json
 ├── scripts/
 │   ├── style_metrics.py            # countable expression features (stdlib only)
+│   ├── zh_metrics.py               # the same, for Chinese corpora (stdlib only)
 │   └── holdout_split.py            # reproducible seeded keep/masked split
 ├── .gitignore
 ├── CHANGELOG.md
@@ -201,7 +202,7 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 ### Host requirements
 
 The skill is written to run under **any** agent host, not a particular one. It needs a filesystem it
-can write to and Python 3 for the two scripts; both are standard-library-only, with no install step.
+can write to and Python 3 for the scripts; all three are standard-library-only, with no install step.
 
 Three locations are host-dependent and resolved once at the start of a run: where the corpus is read
 from, where the work directory is created (default `persona_work/`), and where the finished persona
@@ -217,6 +218,10 @@ Both run standalone, no install required.
 # Measure expression features across a corpus (or a single file)
 python scripts/style_metrics.py path/to/corpus/
 
+# For a Chinese corpus — same feature classes, measured in 汉字.
+# --terms tracks the subject's own vocabulary; the script ships with no term list.
+python scripts/zh_metrics.py path/to/corpus/ --per-file --terms 秩序,封建,德性
+
 # Produce a reproducible seeded split for the held-out projection test.
 # Takes a JSON list of passage IDs — {"passages": ["p001", ...]} or a bare array — not a corpus path.
 python scripts/holdout_split.py passages.json --seed 42 --frac 0.12 --out split.json
@@ -226,6 +231,8 @@ python scripts/holdout_split.py --ids p001 p002 p003 p004 --seed 42
 ```
 
 `style_metrics.py` reports sentence-length distribution, hedge and booster rates, punctuation rhythm, lexical diversity, person-reference ratios, and top content terms and bigrams.
+
+`zh_metrics.py` reports the same classes for Chinese text — sentence length in 汉字, Chinese hedge and booster rates, punctuation rhythm (including 《》 and the interpunct that marks transliterated names), person-reference ratios, a character-n-gram fingerprint, and a discourse-scaffolding absence check that feeds the avoid-list in `voice.md`. `style_metrics.py` tokenises on `[A-Za-z]`, so on a CJK corpus it returns zeros for every feature that matters; reach for this one instead.
 
 ### Artifact schemas
 

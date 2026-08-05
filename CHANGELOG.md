@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`scripts/zh_metrics.py` — the expression-measurement script for Chinese corpora.** The whole
+  fine-grained expression pass, the expressive-match probe, `voice.md`'s measured baseline, and the
+  Stage 5 style-match test all rest on `style_metrics.py`, which tokenises on `[A-Za-z]` and counts
+  English hedges and boosters. On a Chinese corpus it returns zeros for every feature that matters —
+  and it returns them *silently*, so the failure looks like a corpus with no measurable style rather
+  than a tool that cannot read it. That is the worst shape a gap can take in a pipeline whose whole
+  claim is "measured, never estimated". This computes the same feature classes in the units Chinese
+  prose is actually measured in: sentence length in 汉字, Chinese hedge/booster sets (simplified and
+  traditional), punctuation rhythm including 《》 and the interpunct that marks transliterated names,
+  person-reference ratios, a character-n-gram fingerprint in place of a word segmenter, and a
+  discourse-scaffolding absence check that feeds `voice.md`'s avoid-list directly. Stdlib only, like
+  the other two.
+- The script **ships with no vocabulary list**. A distiller's tool must not carry one subject's
+  jargon, so tracked terms are passed in with `--terms` (inline or a file) and reported as
+  per-10k rates alongside everything else.
+
+### Changed
+
+- Stage 2, `extraction.md` Pass A, `output-template.md`'s "measured, never estimated" rule, and the
+  Stage 5 style-match procedure now name the Chinese script where the Latin one would fail, and
+  `output-template.md` additionally asks which script and flags produced a `voice.md` baseline
+  table — a table nobody can re-run is not a measurement.
+
 ## [2.0.0] — 2026-08-04
 
 Sizing and voice. Two of the skill's constants turned out to be doing less work than they looked
