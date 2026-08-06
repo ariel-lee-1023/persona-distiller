@@ -69,6 +69,22 @@ before evaluating", "Treats institutional claims as suspect until Z" — with th
 in and 1–2 example passages. State it as a *move the persona makes*, not as a description of the
 person ("does X when Y", never "the author tends to").
 
+**Use `scripts/kwic.py` to pull the evidence and to test gate 1.** `grep` is the wrong instrument
+here: extracted prose arrives with paragraphs on single lines thousands of characters long, so a
+match returns the entire paragraph, and a match straddling a line break is missed altogether. The
+script normalises whitespace first and returns a fixed-width window around each hit — the shape
+evidence actually needs — and `--json` writes straight into an element's `evidence` field.
+
+`--count` is the cross-cluster recurrence check made cheap: it reports hits per cluster, so you can
+see at a glance whether a candidate clears the ≥2-independent-clusters bar or is a one-off you were
+about to promote. It says so explicitly when only one cluster contains the pattern.
+
+One trap, because it costs an hour every time: **the pattern is a Python regex, not a shell one.**
+Alternation is `a|b`. Writing `a\|b` — the habit from grep and sed — matches a literal pipe and
+returns nothing, which is indistinguishable from a corpus that genuinely lacks the passage. The
+script warns when it sees `\|`, but the general rule holds: an empty result on a term you are
+confident about is a tooling failure until proven otherwise, never a finding about the corpus.
+
 Adversarial / critical sources, if present in the corpus, are especially useful here: the places
 where critics push back reveal where the person's real decision boundaries are. Distilling only
 flattering material yields hagiography, not a decision architecture.

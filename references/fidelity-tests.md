@@ -92,6 +92,39 @@ the averages match, because the modulation is the individuating part. `voice.md`
 baseline block should be the same numbers this test compares against; if they disagree, the module
 was written from estimates rather than from a run — fix that before reading anything into the gap.
 
+## 4. Discrimination test  (tests *claimed internal variation* — conditional)
+
+Run this **only when the persona claims registers**: "in interviews I do X, in essays Y", "before
+2015 I held Z", "each work has its own vocabulary". For a single-register persona it does not apply
+and is omitted from `fidelity.json`.
+
+Tests 1–3 all ask one question from three angles: does this read like the person? None asks whether
+the person's registers can be **told apart** — and that is prior. A generated passage can match the
+aggregate baseline perfectly while being indistinguishable from every other register the core
+claims, so the style-match test cannot catch this failure. If the registers are not separable in the
+source, the modulation rules are decoration: the host agent cannot act on a distinction the corpus
+does not support, and the voice will average toward one register whatever the rules say.
+
+1. `scripts/discrimination_test.py sample clusters/ --per-cluster 2 --seed 42 --mask-names --key
+   key.json` prints unlabelled passages and writes the answer key to a file.
+2. Classify every passage by register signature alone — **before** opening the key.
+3. `… score key.json --answers <ids>` scores it and lists the confused pairs.
+
+- **≥ 0.90** — separable; per-register rules are load-bearing. Keep them.
+- **0.70–0.90** — usable; name the confusable pairs in the coverage report and merge the worst.
+- **< 0.70** — the registers are not distinct in this corpus. **Collapse them** into one honest
+  voice and record the decision. A core that promises a distinction it cannot perform is worse than
+  one that never claimed it.
+
+Use `--mask-names` and trust that number over the unmasked one. Recognising a cast of characters is
+not recognising a register, and a user's utterance will never contain the cast. Read the confusion
+list as diagnosis, not noise: a pair confused repeatedly is one register wearing two labels, and the
+fix is to merge them in the core rather than to re-run with a different seed.
+
+The ceiling this measures is generous — classifying the subject's own prose is easier than routing a
+stranger's sentence — so treat a high score as *the registers carry information*, not as field
+accuracy.
+
 ---
 
 ## `fidelity.json`
@@ -109,7 +142,9 @@ Record both phases — the gate result and the final result — so the loop is a
   "cost": {"total_divergences": 9, "slated_for_core": 9, "in_core_final": 8,
            "logged_out": 1, "missing_unlogged": 0, "presence_assertion": "pass"},
   "style": {"sentence_len_delta": 0.08, "hedge_rate_delta": 0.03,
-            "modulation_reproduced": true, "notes": "clipping-under-contest present"}
+            "modulation_reproduced": true, "notes": "clipping-under-contest present"},
+  "discrimination": {"score": 0.85, "n": 20, "seed": 42, "mask_names": true,
+                     "confusable_pairs": ["c07->c01"]}
 }
 ```
 

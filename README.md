@@ -188,10 +188,14 @@ Output quality is strictly bounded by corpus coverage, diversity, and signal den
 │       ├── scores.schema.json
 │       ├── fidelity.schema.json
 │       └── passages.schema.json
-├── scripts/
-│   ├── style_metrics.py            # countable expression features (stdlib only)
-│   ├── zh_metrics.py               # the same, for Chinese corpora (stdlib only)
-│   └── holdout_split.py            # reproducible seeded keep/masked split
+├── scripts/                        # all stdlib-only, no install step
+│   ├── corpus_clean.py             # Stage 1 — extraction-damage census and repair
+│   ├── segment.py                  # Stage 1 — cut clusters, write a schema-valid manifest
+│   ├── style_metrics.py            # Stage 2 — countable expression features
+│   ├── zh_metrics.py               # Stage 2 — the same, for Chinese corpora
+│   ├── kwic.py                     # Stage 2 — keyword-in-context evidence retrieval
+│   ├── holdout_split.py            # Stage 5 — reproducible seeded keep/masked split
+│   └── discrimination_test.py      # Stage 5 — blind register-separation gate (conditional)
 ├── .gitignore
 ├── CHANGELOG.md
 ├── LICENSE
@@ -212,9 +216,20 @@ rather than failing the run.
 
 ### Scripts
 
-Both run standalone, no install required.
+All run standalone, no install required. Roughly in pipeline order.
 
 ```bash
+# Stage 1 — census extraction damage. Report only; nothing is written without --fix.
+# Catches lost fi/fl/ff ligatures ("rst" for "first"), words wrapped across lines by
+# justified typesetting ("transporta- tion"), and EPUB/markup residue. All three leave
+# fluent, readable text that measures wrong, so none of them is visible by eye.
+python scripts/corpus_clean.py raw/
+python scripts/corpus_clean.py raw/ --fix --out clean/
+
+# Stage 1 — cut clusters from a spec and write clusters/manifest.json.
+# Boundaries may be line numbers or regexes; prefer regexes, which survive re-extraction.
+python scripts/segment.py spec.json --out persona_work/ --dry-run
+
 # Measure expression features across a corpus (or a single file)
 python scripts/style_metrics.py path/to/corpus/
 
@@ -228,9 +243,38 @@ python scripts/holdout_split.py passages.json --seed 42 --frac 0.12 --out split.
 
 # …or pass the IDs inline
 python scripts/holdout_split.py --ids p001 p002 p003 p004 --seed 42
+
+# Stage 2 — pull evidence passages. grep returns whole paragraphs on this kind of text
+# and misses matches straddling a line break; this returns fixed-width windows.
+# --count reports hits per cluster: the >=2-independent-clusters corroboration check.
+python scripts/kwic.py clusters/ "levell?ing|the public is" --before 300 --after 900
+python scripts/kwic.py clusters/ "single individual" --count
+
+# Stage 5 — blind register-separation gate, for personas that claim internal variation.
+# Two steps, because the answers must be written before the key is seen.
+python scripts/discrimination_test.py sample clusters/ --seed 42 --mask-names --key key.json
+python scripts/discrimination_test.py score key.json --answers c09 c05 c02 c06
 ```
 
 `style_metrics.py` reports sentence-length distribution, hedge and booster rates, punctuation rhythm, lexical diversity, person-reference ratios, and top content terms and bigrams.
+
+`corpus_clean.py` detects ligature loss in two stages, and the distinction matters: an anomalously
+low `f` rate is only a **screen** (it false-positives on short files), while suspect-token density
+is the **verdict** — damaged corpora run 50–100× a clean one on that measure, so the two rarely
+disagree by accident. Repairs are conservative by default: tokens that are also real English words
+are reported but left alone unless you pass `--aggressive`, and a hyphen is only closed up when
+whitespace follows it, so `self-love` survives while `transporta- tion` is joined.
+
+`kwic.py` takes a **Python** regex, not a shell one. Alternation is `a|b`; writing `a\|b` matches a
+literal pipe and returns nothing, which looks exactly like a corpus that lacks the passage. The
+script warns, but the general rule is worth holding: an empty result on a term you are confident
+about is a tooling failure until proven otherwise.
+
+`discrimination_test.py` answers a question the other three fidelity checks structurally cannot.
+They ask whether generated prose reads like the person; this asks whether the person's *registers
+can be told apart* — and a passage can match the aggregate baseline perfectly while being
+indistinguishable from every other register the core promises. Below 0.70, collapse the registers
+into one honest voice rather than shipping a distinction the persona cannot perform.
 
 `zh_metrics.py` reports the same classes for Chinese text — sentence length in 汉字, Chinese hedge and booster rates, punctuation rhythm (including 《》 and the interpunct that marks transliterated names), person-reference ratios, a character-n-gram fingerprint, and a discourse-scaffolding absence check that feeds the avoid-list in `voice.md`. `style_metrics.py` tokenises on `[A-Za-z]`, so on a CJK corpus it returns zeros for every feature that matters; reach for this one instead.
 
