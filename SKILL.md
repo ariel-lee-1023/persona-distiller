@@ -119,7 +119,11 @@ Read the corpus. Extract text with structure preserved (headings, speaker turns,
 Segment into coherent **clusters** — per work/chapter, per interview, per decision record, per
 time period. Build an internal **coverage map**: domains covered, dialogue-vs-monologue ratio,
 decision density, temporal spread. This map drives later auto-weighting and the honest coverage
-report. → See `references/pipeline.md` (Stage 1) for extraction routing by file type, and
+report. Run `scripts/corpus_clean.py` over `raw/` first — converted corpora lose ligatures, wrap
+words across lines, and carry markup residue, none of which looks like damage but all of which
+corrupts the expression pass silently. Then cut the clusters with `scripts/segment.py`, which
+writes a schema-valid `clusters/manifest.json` and reports the firsthand ratio that sets the core
+budget's ceiling. → See `references/pipeline.md` (Stage 1) for extraction routing by file type, and
 `references/schemas/` for the validatable shape of every intermediate JSON artifact.
 
 ### Stage 2 — Multi-granularity extraction
@@ -136,6 +140,10 @@ Run three passes over the segmented corpus:
   commitments, refusals, and moves (concede / reframe / dig in / shift footing). Flag every case
   where the *convenient or generic* response diverges from the person's *attested characteristic*
   response. These flags are gold.
+
+Pull evidence with `scripts/kwic.py` rather than `grep` — extracted prose puts whole paragraphs on
+single lines, so `grep` returns the paragraph and misses matches that straddle a break. Its
+`--count` mode is the ≥2-independent-clusters check made cheap.
 → Full taxonomy and what-to-look-for: `references/extraction.md`.
 
 ### Stage 3 — Multi-probe curation & deletion *(the main differentiator — do this carefully)*
@@ -215,8 +223,14 @@ cut — `voice.md` takes the demoted, never the deleted.
   including one contested prompt and one long enough to drift; re-run `style_metrics.py`; compare
   feature distributions *and modulation* against held-out originals; and confirm nothing on the
   avoid-list appears.
+- **Discrimination test** *(only if the core claims registers — per-work, per-period, per-venue)* —
+  `scripts/discrimination_test.py` samples passages, hides the labels, and you classify them blind.
+  The other three checks all ask whether this reads like the person; none asks whether the person's
+  registers can be **told apart**, and a passage can match the aggregate baseline perfectly while
+  being indistinguishable from every other register the core promises. Below 0.70, collapse the
+  registers into one honest voice rather than shipping a distinction the persona cannot perform.
 
-Log all three results to `provenance.md` and the coverage report. If a check falls below threshold,
+Log all results to `provenance.md` and the coverage report. If a check falls below threshold,
 emit a **reduced-scope** core with the gap logged, or surface it to the user for corpus improvement
 — never paper over it. → Procedures, thresholds, and reporting: `references/fidelity-tests.md`.
 
@@ -310,3 +324,23 @@ patterns (lean front-loaded core, on-demand reference files, tight token budgets
 - `scripts/holdout_split.py` — reproducible seeded split of passages into keep/masked sets for
   the held-out projection test. Takes a JSON list of passage IDs (see
   `references/schemas/passages.schema.json`) or `--ids` on the command line — not a corpus path.
+- `scripts/corpus_clean.py` — **Stage 1.** Extraction-damage census and repair: lost fi/fl/ff
+  ligatures, words wrapped across lines by justified typesetting, and EPUB/markup residue. All three
+  leave fluent, readable text that measures wrong, so nothing catches them by eye. Reports by
+  default, writes only with `--fix`, and separates a confirmed problem from a mere screen signal.
+  Run it before any metrics; a baseline taken over damaged text is not a baseline.
+- `scripts/segment.py` — **Stage 1.** Cuts the corpus into clusters from a spec of line numbers or
+  regex boundaries, strips repeating running headers, and writes a `clusters/manifest.json` that
+  validates against the schema. Guards the two silent errors of hand-cutting: boundary drift, which
+  makes one "cluster" average two registers, and editorial bleed, which counts introductions and
+  endnotes as the subject's own words. `--dry-run` checks boundaries before writing.
+- `scripts/kwic.py` — **Stage 2.** Keyword-in-context evidence retrieval. Extracted prose puts whole
+  paragraphs on single lines, so `grep` returns the paragraph and misses matches straddling a break;
+  this normalises whitespace and returns fixed-width windows, with `--json` writing straight into an
+  element's `evidence` field. `--count` gives hits per cluster — the ≥2-cluster corroboration check.
+  The pattern is a Python regex: `a|b`, never `a\|b`.
+- `scripts/discrimination_test.py` — **conditional gate, Stage 3.5 / Stage 5.** Blind
+  register-separation test, for personas that claim internal variation. Samples passages, hides the
+  labels, scores your blind classification, and names the confused pairs. Answers a question the
+  other three tests structurally cannot: not "does this sound like them" but "are these registers
+  actually distinct". Use `--mask-names` — recognising a cast is not recognising a register.

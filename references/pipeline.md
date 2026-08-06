@@ -66,6 +66,25 @@ Sanity-check every extraction: if a file yields near-empty or garbled text (comm
 PDFs), flag it and either OCR it or note it as unusable in the coverage report — do not silently
 distill from noise.
 
+**Run `scripts/corpus_clean.py` over `raw/` before anything reads it.** Wholesale garbling is easy
+to see; the damage that actually costs you is not, because it leaves fluent, readable text that
+measures wrong:
+
+- **Ligature loss** — PDF and EPUB extraction drops fi/fl/ff/ffi, so *first* arrives as `rst` and
+  *difference* as `dierence`. The prose still reads; the lexical fingerprint and the
+  conspicuously-absent-words list are both corrupted, and quoted evidence is unusable.
+- **Soft hyphenation** — justified columns wrap words across lines (`transporta- tion`), and every
+  wrapped word is counted as two. Inflates word counts and sentence-length means by 1–2% and
+  scatters fragments through the top-terms list.
+- **Markup residue** — EPUB anchors and page-position tokens survive conversion and enter the
+  corpus as high-frequency "content words".
+
+The script reports by default and writes only with `--fix`. Read the census first: it separates a
+confirmed ligature problem (suspect tokens per 10k words; damaged corpora run 50–100× a clean one)
+from a mere screen signal (a low `f` rate, which false-positives on short files). Anything measured
+before this ran has to be re-measured after it — a baseline taken over damaged text is not a
+baseline, and every expressive-match score downstream inherits it.
+
 ## Segmentation into clusters
 
 A **cluster** is a coherent unit that can carry independent evidence. Good cluster boundaries:
@@ -99,6 +118,21 @@ Write a `clusters/manifest.json`:
 `attribution` is required and one of `firsthand | secondhand | mixed | unknown` — see
 [`acquisition.md`](acquisition.md) for how to assign it and the three hard rules that depend on it.
 Remote clusters also carry `source_url`, `retrieved`, and (for git) `revision`.
+
+**`scripts/segment.py` performs the cut and writes the manifest.** You give it a spec naming each
+cluster and where it starts and stops — line numbers, or regexes matched against the source — and
+it slices, strips the running headers that repeat on every page of a scanned book, counts words,
+and emits a manifest that validates against the schema. Prefer regex boundaries: they survive
+re-extraction of the same source, and line numbers do not.
+
+It exists because cutting a multi-work volume by hand produces two errors that are invisible
+afterwards. **Boundary drift** — a slice running past the end of one work into the next — gives you
+a cluster that mixes two registers, and every per-cluster metric then averages across them.
+**Editorial bleed** — front matter, historical introductions, translator's notes, endnotes and
+indexes captured as the subject's own words — quietly inflates the firsthand ratio the whole run is
+scored against. Use `--dry-run` to check the boundaries land where you think before writing
+anything; it reports each cluster's line span and word count, flags any cluster too small to
+corroborate, and computes the firsthand ratio that will set the core-budget ceiling.
 
 ## Coverage map
 

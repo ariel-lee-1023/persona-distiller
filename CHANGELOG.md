@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Four tools for pipeline steps that were described but not equipped.** The skill shipped
+  measurement and splitting, and left ingestion, segmentation, evidence retrieval, and
+  register-separation to be done by hand. Each is a place where a run goes wrong quietly: the
+  numbers still come out tidy, so nothing signals a problem until the persona is already built on
+  them.
+  - **`scripts/corpus_clean.py` (Stage 1) — extraction-damage census and repair.** `pipeline.md`
+    said to flag garbled extractions, which catches the visible failures. It does not catch the
+    three that leave fluent, readable prose: lost fi/fl/ff ligatures (`rst` for *first*, `dierence`
+    for *difference*), words wrapped across lines by justified typesetting (`transporta- tion`,
+    counted as two words, inflating sentence-length means by 1–2%), and EPUB anchor residue that
+    enters the corpus as high-frequency "content words". Detection is two-stage and the stages are
+    not interchangeable: an anomalously low `f` rate is a *screen* that false-positives on short
+    files, while suspect-token density is the *verdict*, and damaged corpora run 50–100× a clean one
+    on it. Repairs are conservative — tokens that are also real English words are reported but not
+    changed without `--aggressive`, and a hyphen is closed up only when whitespace follows it, so
+    `self-love` survives while `transporta- tion` is joined.
+  - **`scripts/segment.py` (Stage 1) — cut clusters, emit a schema-valid manifest.** Segmentation is
+    required and load-bearing — the projectibility probe needs ≥2 independent clusters — but was
+    unequipped. Hand-cutting a multi-work volume produces two errors that are invisible afterwards:
+    *boundary drift*, where a slice runs into the next work and every per-cluster metric then
+    averages two registers, and *editorial bleed*, where introductions, translator's notes and
+    endnotes are captured as the subject's own words and quietly inflate the firsthand ratio the
+    whole run is scored against. Takes line numbers or regex boundaries — prefer regexes, which
+    survive re-extraction — strips repeating running headers, flags clusters too small to
+    corroborate, and reports the firsthand ratio that sets the core-budget ceiling.
+  - **`scripts/kwic.py` (Stage 2) — keyword-in-context evidence retrieval.** Every extraction carries
+    example passages and every Stage 5 test scores against them, but `grep` cannot produce them:
+    extracted prose puts whole paragraphs on single lines thousands of characters long, so a match
+    returns the paragraph, and a match straddling a line break is missed entirely. `--count` makes
+    the ≥2-independent-clusters check a single command. One trap is documented in the script's own
+    warning path because it costs an hour every time: the pattern is a Python regex, and `a\|b` —
+    the habit from grep and sed — matches a literal pipe and returns nothing, which is
+    indistinguishable from a corpus that genuinely lacks the passage.
+  - **`scripts/discrimination_test.py` — a new conditional gate.** The three existing checks ask one
+    question from three angles: does this read like the person? None asks whether the person's
+    *registers can be told apart*, and that is prior for any core claiming internal variation —
+    per-work, per-period, per-venue. The style-match test structurally cannot catch the failure,
+    because a passage can match the aggregate baseline perfectly while being indistinguishable from
+    every other register the core promises. Samples passages, hides the labels, scores a blind
+    classification, and names the confused pairs. Below 0.70 the instruction is to **collapse** the
+    registers into one honest voice: a core that promises a distinction it cannot perform is worse
+    than one that never claimed it. `--mask-names` exists because recognising a cast of characters is
+    not recognising a register, and a user's utterance will never contain the cast.
 - **`scripts/zh_metrics.py` — the expression-measurement script for Chinese corpora.** The whole
   fine-grained expression pass, the expressive-match probe, `voice.md`'s measured baseline, and the
   Stage 5 style-match test all rest on `style_metrics.py`, which tokenises on `[A-Za-z]` and counts
@@ -27,6 +70,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The four new tools are wired into the steps they belong to, not merely listed.** Stage 1 in
+  `SKILL.md` and `pipeline.md` now open with the damage census and route segmentation through
+  `segment.py`; Stage 2 and `extraction.md` Pass B point at `kwic.py` for evidence and for the
+  ≥2-cluster check; Stage 5 and `fidelity-tests.md` gain the discrimination test as a fourth,
+  conditional check with its own thresholds and its own instruction on failure. A tool named only in
+  a script index gets read after the mistake it prevents.
+- `references/schemas/fidelity.schema.json` gains an optional `discrimination` object — score, n,
+  seed, whether names were masked, and the confusable pairs — so the new gate is as auditable as the
+  other three. It is optional by design: a single-register persona has nothing to discriminate, and
+  recording a score of `1.0` for a test that did not apply would be worse than recording nothing.
 - Stage 2, `extraction.md` Pass A, `output-template.md`'s "measured, never estimated" rule, and the
   Stage 5 style-match procedure now name the Chinese script where the Latin one would fail, and
   `output-template.md` additionally asks which script and flags produced a `voice.md` baseline
