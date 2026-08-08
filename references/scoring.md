@@ -167,6 +167,105 @@ Never top the core up with `stable_style` material to reach the floor. It would 
 and it is precisely the failure mode this whole design exists to prevent: a core that is fluent,
 correctly sized, and reads like anyone.
 
+## The cluster-module budget is computed too
+
+The core is not the only artifact that needs a size. Each `clusters/*.md` module needs one as well,
+and for the same reason: a flat band is a guess that a rich cluster under-uses and a thin one is
+invited to pad. Compute these after the demotion decisions are made — a cluster module's budget is a
+function of what was routed *to* it.
+
+### What actually drives a module's size
+
+Not the cluster's word count. Measured across a ten-module register package, module length correlated
++0.82 with retained evidence fragments and +0.70 with the cluster's own named constructs, but only
+**+0.30 with cluster word count** — and while cluster sizes spanned 9.0×, the modules serving them
+spanned 1.37×. A module carries *constructs and moves*, not proportional coverage of the source, so a
+short dense cluster needs nearly as much room as a long discursive one. Corpus mass belongs in the
+formula as a damped corrective, never as the driver.
+
+### The formula, per cluster
+
+```
+supply_c = 600                                    # fixed frame: header block, orientation, sound
+         +  90 × min(n_apparatus,     12)         # named constructs whose home is this cluster
+         +  90 × min(n_moves,         12)         # argument shapes + interactional moves attested here
+         +  85 × min(n_applications,   8)         # distinct situations this cluster is the answer to
+         +  30 × min(n_fragments,     24)         # attested evidence passages retained
+         +  80 +  15 × min(n_siblings, 9)         # prohibitions, incl. one fence per sibling module
+         + 400 × sqrt(words_c / words_firsthand)  # damped corpus-mass corrective
+
+module_budget_c = clamp(supply_c, floor = 1,800, ceiling = 6,000)
+```
+
+Counting rules, so these are read off Stage 2/3 artifacts rather than invented at write time:
+
+| input | how to count |
+|---|---|
+| `n_apparatus` | named constructs in `frameworks.md` whose cluster column names *this* cluster and not the corpus at large |
+| `n_moves` | demoted `projectible` + `interactional` elements whose evidence sits in this cluster |
+| `n_applications` | distinct entry-situations the module is loaded for — for a persona with a router, the router's fan-in; otherwise the question-shapes this cluster answers better than its siblings |
+| `n_fragments` | attested evidence passages retained in the module |
+| `n_siblings` | other clusters that also get a module (capped at 9) |
+| `words_c`, `words_firsthand` | `clusters/manifest.json` |
+
+`n_siblings` is the term most often missing from hand-written estimates and the one that grows
+fastest with corpus richness. A ten-register persona needs every module to fence itself off from nine
+others — near-miss terms, borrowed vocabulary, the move that belongs to the next work. A
+three-cluster persona needs almost none of that. **The separation cost scales with the number of
+siblings, not with the cluster's own size**, which is exactly why a flat band gets worse as the
+corpus gets better.
+
+Run `scripts/cluster_budget.py` rather than computing by hand; it also raises the floor and re-cut
+flags below.
+
+### The floor (1,800) decides whether the cluster gets a module at all
+
+This is the question `output-template.md`'s "one file per high-value source cluster" never defined.
+Below 1,800 the cluster cannot carry a module that is more than a summary. Do **not** pad it. Either:
+
+1. **Fold it into its nearest sibling module** as a subsection, if they share a register or period; or
+2. **Demote its material to `episodic.md`** and let the core and `voice.md` carry what mattered.
+
+A persona with six clusters and four modules is a normal, honest outcome. Six thin modules is not.
+
+### Cap saturation is a re-cut signal, not a trim signal
+
+The formula saturates around **4,775** — deliberately below the 6,000 ceiling, the same relationship
+the core's supply (6,140) has to its ceiling (6,500). So the ceiling only ever catches a hand-written
+overrun, and the interesting signal is elsewhere: if `n_apparatus > 12` or `n_moves > 12`, the cluster
+is carrying **two registers**, and the fix is upstream. Go back to Stage 1 and re-cut it with
+`segment.py` by period or theme. Never buy the space back by deleting evidence — that treats the
+symptom (a fat file) and leaves the cause (boundary drift, so one "cluster" averages two voices) in
+place.
+
+### Report the runtime load, not the package size
+
+The `clusters/` directory's total is not a constraint; modules load one at a time. What matters is
+the worst-case weight of a single exchange:
+
+```
+loaded_worst_case = core_budget + 2 × max(module_budget) + voice.md + frameworks.md
+```
+
+Two modules because a close secondary ranking may load one. Record this line in `provenance.md`
+alongside the core budget.
+
+### Calibration status — read before trusting the constants
+
+The unit prices were fitted against **ten modules from a single corpus** (a 630k-word, ten-register
+literary package). On that data the formula lands within a mean 3.8% / max 6.0% of the hand-written
+lengths — inside the ±10% tolerance used for the core budget — and an ablation shows every term
+earning its place: dropping any one of `n_apparatus`, `n_fragments`, `n_applications`, or the mass
+term pushes max error to 9.7–16.2%, and a flat constant (which is what a band amounts to) reaches
+18.9%.
+
+That is a defensible set of magnitudes, not a universal constant. Ten points, one corpus, one
+language, one genre. Treat the *structure* as settled and the *coefficients* as provisional: when a
+run finishes, record the realised module sizes and their inputs in `provenance.md` so the next
+calibration has more than one corpus behind it. If a run lands consistently 20%+ off in one direction
+across all its modules, the fixed term (600) is the one to move first — it is the least
+corpus-invariant part of the formula.
+
 ## Gate before assembly
 
 Scoring does not flow straight into Stage 4. Before assembly, run the **projection gate** and **cost
@@ -199,6 +298,17 @@ inspectable and defensible.
     "budget": 4510, "floor_triggered": false,
     "counts": {"cost_refusal":3,"projectible":5,"interactional":3,"variation":2}
   },
+  "cluster_budgets": [
+    {"cluster_id":"c03","supply":3310,"budget":3310,
+     "counts":{"apparatus":7,"moves":8,"applications":7,"fragments":13,"siblings":9},
+     "words":101043,"words_firsthand":630298,
+     "floor_triggered":false,"recut_flagged":false},
+    {"cluster_id":"c12","supply":1635,"budget":1800,
+     "counts":{"apparatus":3,"moves":2,"applications":2,"fragments":4,"siblings":9},
+     "words":25212,"words_firsthand":630298,
+     "floor_triggered":true,"recut_flagged":false,
+     "floor_resolution":"folded into c11's module as a subsection; shares register and period"}
+  ],
   "decisions": [
     {"id":"e017","type":"cost_refusal",
      "scores":{"projectibility":0.9,"cost_refusal":1.0,"expressive_match":0.4,

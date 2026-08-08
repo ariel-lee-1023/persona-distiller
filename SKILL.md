@@ -208,7 +208,19 @@ measured `style_metrics.py` baseline, and anti-drift pairs — is written to `vo
 clusters only, and the core's loading block tells the host to load it before any sustained prose.
 The cap routes surplus style there; it does not discard it. Material cut under the 0.55 rule stays
 cut — `voice.md` takes the demoted, never the deleted.
+
+**The cluster modules are budgeted too, by the same logic as the core.** Size each one with
+`scripts/cluster_budget.py` before writing it — a flat band is a guess that a rich cluster under-uses
+and a thin one is invited to pad, and it is how a package ends up at a third of the size its own
+spec asked for without anything catching it. Module length tracks *conceptual density, not word
+count*: it is a function of the constructs, moves and evidence routed to the cluster, plus a
+fencing cost that scales with how many sibling modules it must distinguish itself from, plus a
+damped corrective for corpus mass. Two flags carry more information than the number: a cluster
+under the **1,800 floor** has not earned a module (fold it into a sibling, or demote it to
+`episodic.md` — never pad), and a cluster that saturates the input caps was **cut wrong** and goes
+back to Stage 1 for re-segmentation rather than having its evidence trimmed.
 → Exact templates, the `voice.md` spec, and directory layout: `references/output-template.md`.
+The module formula, its counting rules, and its calibration status: `references/scoring.md`.
 
 ### Stage 5 — Final fidelity verification *(the gates already ran at 3.5; this confirms the assembled core)*
 - **Projection re-check** — confirm the assembled persona's reasoning still predicts the masked
@@ -248,9 +260,10 @@ A directory containing:
   rules, register range, lexical fingerprint, the `style_metrics.py` baseline, and anti-drift
   pairs). The rest are per-source or residual: one module per high-value source cluster,
   `episodic.md` for demoted attested material, and `provenance.md` mapping each core element to its
-  source. Sizes: cluster modules ~1,500–4,000 tokens each (hard ceiling 6,000 — split rather than
-  trim), `frameworks.md` / `voice.md` / `episodic.md` soft ~4,000, `provenance.md` uncapped since it
-  is an audit file.
+  source. Sizes: cluster modules are **computed per cluster** by `scripts/cluster_budget.py` (floor
+  1,800, hard ceiling 6,000; typically 2,000–4,500 — a cluster under the floor is folded or demoted
+  rather than written thin); `frameworks.md` / `voice.md` / `episodic.md` soft ~4,000;
+  `provenance.md` uncapped since it is an audit file.
 
 Name the output directory with a user-supplied or auto-generated slug + `-perspective`
 (e.g. `deneen-perspective`), and write it to the persona-out location resolved at the start of the
@@ -339,6 +352,13 @@ patterns (lean front-loaded core, on-demand reference files, tight token budgets
   this normalises whitespace and returns fixed-width windows, with `--json` writing straight into an
   element's `evidence` field. `--count` gives hits per cluster — the ≥2-cluster corroboration check.
   The pattern is a Python regex: `a|b`, never `a\|b`.
+- `scripts/cluster_budget.py` — **Stage 4.** Sizes each `clusters/*.md` module from the constructs,
+  moves and evidence routed to it, the number of sibling modules it must fence itself off from, and
+  a damped corpus-mass term — the same supply→clamp shape the core budget uses, because a flat band
+  is how a package silently ships at a third of its intended depth. Raises the two flags that carry
+  more information than the number: **FLOOR** (this cluster has not earned a module — fold or demote,
+  never pad) and **RECUT** (the caps saturated, so the cluster is carrying two registers and belongs
+  back at `segment.py`). `--json` writes the `cluster_budgets` array for `scores.json`.
 - `scripts/discrimination_test.py` — **conditional gate, Stage 3.5 / Stage 5.** Blind
   register-separation test, for personas that claim internal variation. Samples passages, hides the
   labels, scores your blind classification, and names the confused pairs. Answers a question the
