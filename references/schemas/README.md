@@ -57,6 +57,11 @@ Beyond field types, a few of the skill's hard rules are expressed structurally:
   class counts that produced it. The core's size is computed per run rather than fixed, so an
   unlogged size is an unreproducible one; the ceiling is enumerated to `4000 | 5500 | 6500` so a
   budget cannot quietly exceed what the corpus supports.
+- `scores.json` also carries **`cluster_budgets`** — one entry per cluster *considered* for a
+  `clusters/*.md` module, including any the 1,800 floor rejected. Recording the rejections is the
+  point: it turns "this cluster did not earn a module" into an auditable decision rather than an
+  omission. Each entry keeps its input counts and an optional realised size, which is the only data
+  a future recalibration of the formula's coefficients has to work from.
 - All probe scores and composites are bounded to 0–1.
 
 Two rules are deliberately **not** encoded, because valid records violate them:

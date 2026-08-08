@@ -11,7 +11,8 @@ and to the coverage report.
 <slug>-perspective/
 ├── SKILL.md                 # core embodiment artifact, sized to the computed budget, front-loaded
 └── references/
-    ├── clusters/            # one file per high-value source cluster (~1,500–4,000 tokens each)
+    ├── clusters/            # one file per cluster clearing the 1,800 floor; size computed
+    │                        #   per cluster by scripts/cluster_budget.py
     │   ├── c03-<label>.md
     │   └── …
     ├── frameworks.md        # the person's named frameworks / recurring constructs, defined
@@ -102,15 +103,23 @@ Module sizes differ by what governs them — one number for all four was never r
 
 | file | budget | why |
 |---|---|---|
-| `clusters/*.md` | ~1,500–4,000, hard ceiling 6,000 | the only modules loaded *mid-embodiment*; past 6k, split by period or theme rather than trimming evidence |
+| `clusters/*.md` | **computed per cluster** — `scripts/cluster_budget.py`, formula in `scoring.md`; floor 1,800, hard ceiling 6,000 | the only modules loaded *mid-embodiment*, so each is sized to the constructs, moves and evidence routed to it rather than to a shared band. Typical range 2,000–4,500 |
 | `frameworks.md` | soft ~4,000 | scales with how many named constructs the person actually has; preserving their exact terms costs words |
 | `voice.md` | soft ~4,000 | the full expressive system the core's 20% style cap cannot hold; loaded whenever sustained prose is being written in the voice |
 | `episodic.md` | soft ~4,000 | demoted material — if it is outgrowing this, promote the best of it or cut the rest |
 | `provenance.md` | **no ceiling** | one row per core element; an audit file's completeness beats its size, and it is not loaded during embodiment |
 
-- **`clusters/*.md`** — for each high-value cluster, a tight on-demand module: the distinctive
-  voice and moves in that period/work, with the example passages that evidenced them. This is where
-  episodic specificity lives so the core can stay lean.
+- **`clusters/*.md`** — for each cluster whose computed budget clears the 1,800 floor, an on-demand
+  module: the distinctive voice and moves in that period/work, with the example passages that
+  evidenced them. This is where episodic specificity lives so the core can stay lean. Three rules
+  come with the budget and are easy to get wrong (full statement in `scoring.md`):
+  - **The floor decides which clusters get a module at all.** Below 1,800 the module would be a
+    summary — fold the cluster into its nearest sibling module, or demote it to `episodic.md`. Four
+    modules from six clusters is a normal outcome; six thin ones is not.
+  - **Hitting the `n_apparatus`/`n_moves` caps means the cluster was cut wrong**, not that the module
+    needs trimming. Re-cut it at Stage 1 with `segment.py` rather than deleting evidence.
+  - **Size to the constructs, not to the source.** Module length tracks conceptual density, not word
+    count; a short dense cluster earns nearly as much room as a long discursive one.
 - **`frameworks.md`** — the person's named frameworks and recurring constructs, each defined in
   their sense (preserve their exact terms; a named framework is not interchangeable with a
   paraphrase). Include which clusters use it.
